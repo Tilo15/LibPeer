@@ -1,0 +1,57 @@
+
+from LibPeer.Discovery import DHT
+from LibPeer.Transports import ESP
+from LibPeer.Networks import ipv4
+import LibPeer.Manager
+import traceback
+
+# Create the discoverer
+discoverer = DHT.DHT()
+
+# Create the manager
+# 	Application Name: helloworld
+#	Discoverer      : our discoverer
+#	Cache File Path : cachefile
+m = LibPeer.Manager.Manager("helloworld", discoverer, "cachefile", True, 0)
+
+# Register a network and transport with the manager
+net = m.add_network(ipv4.IPv4)
+trans = m.add_transport(ESP.ESP)
+
+def incoming_message(message_object):
+	print
+	print("New message from %s:" % str(message_object.peer.address))
+	print("    %s" % message_object.data)
+	print
+
+# Make this peer discoverable
+m.set_discoverable(True)
+
+# Subscribe to incoming data
+m.subscribe(incoming_message)
+
+# Start up the manager
+m.run()
+
+try:
+	while(True):
+		print
+		print("Type a message:")
+		message = raw_input()
+		if(message == "#"):
+			break
+
+		if(message == "ping"):
+			for peer in m.get_peers():
+				print peer.ping()
+
+		else:
+			for peer in m.get_peers():
+				peer.send_message(trans, message)
+				print("Sent your message to %s" % str(peer.address))
+
+except Exception:
+	print(traceback.format_exc())
+
+
+m.stop()
