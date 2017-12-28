@@ -36,7 +36,7 @@ class Samband(protocol.DatagramProtocol):
                     # Valid packet
                     peer = LocalPeer(data[1])
                     self.peers[hashlib.sha256(data[1]).digest()] = peer
-                    log.info("local peer %s just uncovered itself via samband" % str(address))
+                    log.debug("local peer %s just uncovered itself via samband" % str(address))
                 else:
                     log.warn("corrupt samband packet")
         self._clean()
