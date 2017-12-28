@@ -1,5 +1,5 @@
 
-from LibPeer.Discovery import DHT
+from LibPeer.Discovery import LAN
 from LibPeer.Transports import ESP
 from LibPeer.Networks import ipv4
 from LibPeer.Logging import log
@@ -9,7 +9,7 @@ import traceback
 log.settings(True, 1)
 
 # Create the discoverer
-discoverer = DHT.DHT()
+discoverer = LAN.LAN()
 
 # Create the manager
 # 	Application Name: helloworld
@@ -18,7 +18,7 @@ discoverer = DHT.DHT()
 m = LibPeer.Manager.Manager("helloworld", discoverer, "cachefile")
 
 # Register a network and transport with the manager
-net = m.add_network(ipv4.IPv4)
+net = m.add_network(ipv4.IPv4, local=True)
 trans = m.add_transport(ESP.ESP)
 
 def incoming_message(message_object):

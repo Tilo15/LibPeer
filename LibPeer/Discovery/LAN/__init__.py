@@ -44,3 +44,6 @@ class LAN(Discoverer):
         reactor.callLater(length, deferred.callback, *args)
         return deferred
 
+    def stop_discoverer(self):
+        pass
+

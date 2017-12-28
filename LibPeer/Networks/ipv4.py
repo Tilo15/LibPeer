@@ -15,8 +15,8 @@ class IPv4(Networks.Network):
         self.port = 3000  # todo
         self.publicPort = None
         if(local):
-            while(not PublicPort.is_local_port_free(port)):
-                port += 1
+            while(not PublicPort.is_local_port_free(self.port)):
+                self.port += 1
 
         else:
             self.publicPort = PublicPort()
