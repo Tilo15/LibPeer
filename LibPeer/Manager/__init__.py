@@ -14,10 +14,8 @@ import threading
 import sys
 
 class Manager:
-	def __init__(self, application, discoverer, cachePath, logging=False, loglevel=1):
+	def __init__(self, application, discoverer, cachePath,):
 		self.application = application
-		self.logging = logging
-		self.loglevel = loglevel
 		self.threaded = False
 		self.discoverable = False
 		self.muxer = Muxer()
@@ -57,10 +55,7 @@ class Manager:
 
 
 	def run_blocking(self):
-		"""Run the Peer stack on the current thread"""
-		log.enabled = self.logging
-		log.level = self.loglevel
-		
+		"""Run the Peer stack on the current thread"""		
 		loop = LoopingCall(self.loop)
 	        loop.start(1)
 		self.discoverer.start_discoverer(self.discoveryCache).addCallback(self.bootstrap_complete)

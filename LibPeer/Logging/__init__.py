@@ -7,7 +7,7 @@ import subprocess
 
 class log:
 	enabled = True
-	level = 0
+	level = 1
 	output = sys.stdout
 	levels = ["DEBUG", "MESSAGE", "INFO", "WARNING", "ERROR", "CRITICAL", "MELTDOWN"]
 	
@@ -112,3 +112,16 @@ class log:
 			identifier = str(frame.f_locals["self"].__class__.__name__)
 
 		return identifier
+
+	@staticmethod
+	def settings(enabled, level=1, output=sys.stdout):
+		"""set settings on the logger, options are:
+			settings(enabled, [level, [output]])
+				enabled: a boolean turning on or off logging,
+				level: an int from 0 to 6 to filter out messages of less important
+					   6 being the most important, 0 being the least
+				output: the output to write to
+		"""
+		log.enabled = enabled
+		log.level = level
+		log.output = output
