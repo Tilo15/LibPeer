@@ -34,10 +34,10 @@ class Manager:
 		self.add_transport(ping.Ping)
 
 
-	def add_network(self, networkClass):
+	def add_network(self, networkClass, **kwargs):
 		"""Add a network type to the manager,
 		returns the newly created Network object"""
-		net = networkClass(self.muxer)
+		net = networkClass(self.muxer, **kwargs)
 		return net
 
 
@@ -201,7 +201,14 @@ class Manager:
 		reactor.callFromThread(function, *args)
 
 	def stop(self):
+		log.debug("stopping discoverer")
 		self.discoverer.stop_discoverer()
+
+		log.debug("stopping networks")
+		for net in self.muxer.networks.values():
+			net.close()
+
+		log.debug("stopping reactor")
 		self.call(reactor.stop)
 		
 

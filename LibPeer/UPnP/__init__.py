@@ -13,7 +13,7 @@ class PublicPort:
         self.lan_address = None
 
         self.upnp = miniupnpc.UPnP()
-        self.upnp.discoverdelay = 2000
+        self.upnp.discoverdelay = 300
         log.info("searching for UPnP devices")
         ndevices = self.upnp.discover()
         log.debug("%i UPnP devices found" % ndevices)

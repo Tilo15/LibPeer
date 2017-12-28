@@ -11,3 +11,6 @@ class Network:
 
 	def get_address(self, peer_suggestion):
 		raise NotImplemented()
+
+	def close(self):
+		raise NotImplemented()
