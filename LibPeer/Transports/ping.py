@@ -10,8 +10,9 @@ from LibPeer.Logging import log
 # id = \x00
 
 class Ping(Transport):
-	def __init__(self, muxer):
+	def __init__(self, muxer, *modifiers):
 		self.muxer = muxer
+		self.modifiers = [] # Disable modifiers for ping
 		self.id = b'\x00'
 		self.muxer.add_transport(self)
 		self.data_received = Events.Event()

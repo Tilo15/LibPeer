@@ -39,10 +39,10 @@ class Manager:
 		return net
 
 
-	def add_transport(self, transportClass):
+	def add_transport(self, transportClass, *modifiers):
 		"""Add a transport type to the manager,
 		returns the newly created Transport object"""
-		trans = transportClass(self.muxer)
+		trans = transportClass(self.muxer, *modifiers)
 		self.transports[trans.id] = trans
 		trans.data_received.subscribe(self.callback)
 		return trans
