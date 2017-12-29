@@ -2,10 +2,10 @@ import LibPeer.Events as Events
 from LibPeer.Muxer import parcel
 from LibPeer.Transports import Transport
 
-# Erronious Streaming Protocol
+# Erronious Datagram Protocol
 # id = \x01
 
-class ESP(Transport):
+class EDP(Transport):
 	def __init__(self, muxer, *modifiers):
 		self.muxer = muxer
 		self.modifiers = modifiers

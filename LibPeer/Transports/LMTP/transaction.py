@@ -1,6 +1,6 @@
 from twisted.internet import reactor, task
 from LibPeer.Logging import log
-from LibPeer.Transports.LSP import chunk
+from LibPeer.Transports.LMTP import chunk
 import LibPeer.Events
 import struct
 import time
@@ -99,8 +99,6 @@ class Transaction:
             # The chunk has landed!
             self.acknowledgements += 1
             del self.chunks_in_flight[sequence_number]
-        else:
-            log.msg("chunk acknowledged more than once")
 
         # Send more chunks!
         self.send_chunks()
@@ -162,7 +160,7 @@ class Transaction:
         if(self.max_resends < 1):
             self.max_resends = 1
 
-        log.debug("Latency: %.8f\tMissing: %.0f%%\tGain: %.2f\tResends: %i\tWindow: %i\tSent: %i\tAcknowledged: %i\tIn Flight: %i\tDelay: %.4fs\tTransfered: %.0f%%" % (self.latency, resend_ratio*100, gain, self.max_resends, self.window_size, self.sent_chunks, self.acknowledgements, len(self.chunks_in_flight), (time.time() - timestamp), (self.acknowledgements/float(self.size))*100))
+        #log.debug("Latency: %.8f\tMissing: %.0f%%\tGain: %.2f\tResends: %i\tWindow: %i\tSent: %i\tAcknowledged: %i\tIn Flight: %i\tDelay: %.4fs\tTransfered: %.0f%%" % (self.latency, resend_ratio*100, gain, self.max_resends, self.window_size, self.sent_chunks, self.acknowledgements, len(self.chunks_in_flight), (time.time() - timestamp), (self.acknowledgements/float(self.size))*100))
 
     def connect(self):
         # Connect request with size of data

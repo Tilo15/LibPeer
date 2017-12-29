@@ -1,11 +1,12 @@
 import LibPeer.Events as Events
 
 TRANSPORT_PING        = b'\x00'
-TRANSPORT_ESP         = b'\x01'
+TRANSPORT_EDP         = b'\x01'
 TRANSPORT_MCP         = b'\x02' #TODO
 TRANSPORT_TELEMETRY   = b'\x03' #TODO
 TRANSPORT_TELECOMMAND = b'\x04' #TODO
-TRANSPORT_LSP         = b'\x05' #TODO
+TRANSPORT_LMTP        = b'\x05'
+TRANSPORT_DSTP        = b'\x06' #TODO
 
 
 class Transport:

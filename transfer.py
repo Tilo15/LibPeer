@@ -1,13 +1,13 @@
 
 from LibPeer.Discovery import LAN
-from LibPeer.Transports import LSP
+from LibPeer.Transports import LMTP
 from LibPeer.Networks import ipv4
 from LibPeer.Logging import log
 import LibPeer.Manager
 import traceback
 import time
 
-log.settings(True, 0)
+log.settings(True, 1)
 
 # Create the discoverer
 discoverer = LAN.LAN()
@@ -20,7 +20,7 @@ m = LibPeer.Manager.Manager("shitftp", discoverer, "cachefile")
 
 # Register a network and transport with the manager
 net = m.add_network(ipv4.IPv4, local=True)
-trans = m.add_transport(LSP.LSP)
+trans = m.add_transport(LMTP.LMTP)
 
 def incoming_message(message_object):
 	print("New message from %s:" % str(message_object.peer.address))

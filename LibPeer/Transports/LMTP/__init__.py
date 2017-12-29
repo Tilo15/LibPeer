@@ -1,14 +1,14 @@
 import LibPeer.Events
 from LibPeer.Muxer import parcel
 from LibPeer.Transports import Transport
-from LibPeer.Transports.LSP import transaction
+from LibPeer.Transports.LMTP import transaction
 from LibPeer.Logging import log
 import uuid
 
-# Lossless Streaming Protocol
+# Large Message Transport Protocol
 # id = \x05
 
-class LSP(Transport):
+class LMTP(Transport):
 	def __init__(self, muxer, *modifiers):
 		self.muxer = muxer
 		self.modifiers = modifiers
