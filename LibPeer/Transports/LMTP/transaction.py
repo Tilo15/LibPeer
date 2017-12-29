@@ -234,7 +234,7 @@ class Transaction:
                 current_time = time.time()
                 clock_difference = remote_time - self.time_request_time
                 current_time += clock_difference
-                self.latency = (current_time - remote_time) * 2
+                self.latency = current_time - remote_time
                 self.time_request_time = 0
                 log.debug("a delay of %.3f seconds was measured" % self.latency)
             else:
