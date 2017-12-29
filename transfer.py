@@ -16,7 +16,7 @@ discoverer = LAN.LAN()
 # 	Application Name: helloworld
 #	Discoverer      : our discoverer
 #	Cache File Path : cachefile
-m = LibPeer.Manager.Manager("shitftp", discoverer, "cachefile")
+m = LibPeer.Manager.Manager("badftp", discoverer, "cachefile")
 
 # Register a network and transport with the manager
 net = m.add_network(ipv4.IPv4, local=True)
