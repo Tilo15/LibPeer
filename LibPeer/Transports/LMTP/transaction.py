@@ -9,7 +9,7 @@ import random
 class Transaction:
     TIMEOUT_CONNECTION = 10
     TIMEOUT_CHUNK = 2
-    LATENCY_CHECK_INTERVAL = 1
+    LATENCY_CHECK_INTERVAL = 5
 
     def __init__(self, id, address, channel, send_func, delay_target = 0.1):
         # Shared
