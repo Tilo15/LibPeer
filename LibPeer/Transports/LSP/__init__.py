@@ -53,7 +53,7 @@ class LSP(Transport):
 			log.debug("ignoring parcel for transaction '%s' which has already completed" % id.encode("hex"))
 
 		else:
-			log.debug("got new transaction with id '%'" % id.encode("hex"))
+			log.debug("got new transaction with id '%s'" % id.encode("hex"))
 			# Create new transaction to service parcel
 			trans = transaction.Transaction(id, _parcel.address, _parcel.channel, self.transaction_send, self.delay_target)
 
