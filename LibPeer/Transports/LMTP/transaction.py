@@ -32,9 +32,10 @@ class Transaction:
         self.no_more_chunks = False
         self.chunks_in_flight = {}
         self.acknowledgements = 0
+        self.additional_acknowledgements = 0
         self.sent_chunks = 0
         self.time_request_time = 0
-        self.latency = 0
+        self.latency = 0.5
         self.window_sizes = []
 
         # For receiving only
@@ -94,12 +95,16 @@ class Transaction:
 
     def chunk_acknowledged(self, data):
         timestamp, sequence_number = struct.unpack("dL", data)
-        self.recalculate_window(timestamp)
         if(sequence_number in self.chunks_in_flight):
             # The chunk has landed!
             self.acknowledgements += 1
             del self.chunks_in_flight[sequence_number]
 
+        else:
+            self.additional_acknowledgements += 1
+
+
+        self.recalculate_window(timestamp)
         # Send more chunks!
         self.send_chunks()
     
@@ -135,32 +140,26 @@ class Transaction:
             # Pick a random in flight chunk and resend it
             ifc = self.chunks_in_flight.values()
             # Decide how many resends we should send
-            amount = self.max_resends + (self.window_size - len(self.chunks_in_flight))
-            if(amount < self.max_resends):
-                amount = self.max_resends
+            amount = (self.window_size - len(self.chunks_in_flight))
+            if(amount < 1):
+                amount = 1
 
             for i in range(int(amount)):
                 _chunk = random.choice(ifc)
                 self.send_chunk(_chunk)
             # Reschedule
-            task.deferLater(reactor, self.delay_target, self.resend_chunks)
+            task.deferLater(reactor, self.latency*2, self.resend_chunks)
 
     def recalculate_window(self, timestamp):
         delay_factor = (self.delay_target - (time.time() - timestamp - self.latency)) / self.delay_target
         window_factor = len(self.chunks_in_flight) / self.window_size
         gain = delay_factor * window_factor
 
-        resend_ratio = (self.sent_chunks - self.acknowledgements) / float(self.sent_chunks)
-
         self.window_size += gain
         if(self.window_size < 1):
             self.window_size = 1
 
-        self.max_resends = self.window_size * resend_ratio
-        if(self.max_resends < 1):
-            self.max_resends = 1
-
-        #log.debug("Latency: %.8f\tMissing: %.0f%%\tGain: %.2f\tResends: %i\tWindow: %i\tSent: %i\tAcknowledged: %i\tIn Flight: %i\tDelay: %.4fs\tTransfered: %.0f%%" % (self.latency, resend_ratio*100, gain, self.max_resends, self.window_size, self.sent_chunks, self.acknowledgements, len(self.chunks_in_flight), (time.time() - timestamp), (self.acknowledgements/float(self.size))*100))
+        log.debug("Latency: %.8f\tGain: %.2f\tWindow: %i\tSent: %i\tAcknowledged: %i\tIn Flight: %i\tDelay: %.4fs\tTransfered: %.0f%%" % (self.latency, gain, self.window_size, self.sent_chunks, self.acknowledgements, len(self.chunks_in_flight), (time.time() - timestamp), (self.acknowledgements/float(self.size))*100))
 
     def connect(self):
         # Connect request with size of data

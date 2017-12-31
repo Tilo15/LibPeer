@@ -12,37 +12,46 @@ class PublicPort:
         self.net_address = None
         self.lan_address = None
 
-        self.upnp = miniupnpc.UPnP()
-        self.upnp.discoverdelay = 300
-        log.info("searching for UPnP devices")
-        ndevices = self.upnp.discover()
-        log.debug("%i UPnP devices found" % ndevices)
+	try:
 
-        self.upnp.selectigd()
-        self.net_address = self.upnp.externalipaddress()
-        self.lan_address = self.upnp.lanaddr
+		self.upnp = miniupnpc.UPnP()
+		self.upnp.discoverdelay = 300
+		log.info("searching for UPnP devices")
+		ndevices = self.upnp.discover()
+		log.debug("%i UPnP devices found" % ndevices)
 
-        log.info("IGD selected: our local IP is %s, our public IP is %s, and we are connected to the IGD on port %i" %
-                    (str(self.lan_address), str(self.net_address), self.upnp.statusinfo()[1]))
+		self.upnp.selectigd()
+		self.net_address = self.upnp.externalipaddress()
+		self.lan_address = self.upnp.lanaddr
 
-        port = 7564 # We start one higher at 7565
-        res = True
-        while(res != None and port < 65536):
-            port = port + 1
-            # Skip port if it isn't free locally
-            while(not PublicPort.is_local_port_free(port)):
-		        port = port + 1
-            res = self.upnp.getspecificportmapping(port, 'UDP')
+		log.info("IGD selected: our local IP is %s, our public IP is %s, and we are connected to the IGD on port %i" %
+		            (str(self.lan_address), str(self.net_address), self.upnp.statusinfo()[1]))
 
-        success = self.upnp.addportmapping(port, 'UDP', self.lan_address, port, 'LibPeer. by Billy Barrow (www.pcthingz.com) operating on port %u' % port, '')
+		port = 7564 # We start one higher at 7565
+		res = True
+		while(res != None and port < 65536):
+		    port = port + 1
+		    # Skip port if it isn't free locally
+		    while(not PublicPort.is_local_port_free(port)):
+				port = port + 1
+		    res = self.upnp.getspecificportmapping(port, 'UDP')
 
-        if(success):
-            log.info("port %i is now forwarded to this machine by the IGD" % port)
-            self.port = port
-            self.open = True
+		success = self.upnp.addportmapping(port, 'UDP', self.lan_address, port, 'LibPeer. by Billy Barrow (www.pcthingz.com) operating on port %u' % port, '')
 
-        else:
-            log.warn("failed to forward port %i on the IGD" % port)
+		if(success):
+		    log.info("port %i is now forwarded to this machine by the IGD" % port)
+		    self.port = port
+		    self.open = True
+
+		else:
+		    log.warn("failed to forward port %i on the IGD" % port)
+
+	except:
+		# Couldn't use UPnP, just open local port
+		port = 7564 # We start one higher at 7565
+		while(not PublicPort.is_local_port_free(port)):
+			port = port + 1
+		self.port = port
 
 
     def close(self):
