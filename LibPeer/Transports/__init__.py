@@ -25,7 +25,7 @@ class Transport:
 
 	def pass_along(self, parcel, obj):
 		"""Used internally by subclasses to pass a message onto its destination
-		all transports should use this and not call self.data_received directly"""
+		all transports should use this to avoid calling self.data_received directly"""
 		obj = self.mod_decode(parcel.address, obj)
 		self.data_received.call(self.id, parcel.address, parcel.channel, obj)
 

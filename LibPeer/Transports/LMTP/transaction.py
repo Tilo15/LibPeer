@@ -7,7 +7,7 @@ import time
 import random
 
 class Transaction:
-    TIMEOUT_CONNECTION = 10
+    TIMEOUT_CONNECTION = 30
     TIMEOUT_CHUNK = 2
     LATENCY_CHECK_INTERVAL = 5
 

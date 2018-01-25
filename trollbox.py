@@ -1,6 +1,6 @@
 
-from LibPeer.Discovery import DHT
-from LibPeer.Transports import EDP
+from LibPeer.Discovery import LAN
+from LibPeer.Transports import DSTP
 from LibPeer.Networks import ipv4
 from LibPeer.Logging import log
 import LibPeer.Manager
@@ -9,7 +9,7 @@ import traceback
 log.settings(True, 0)
 
 # Create the discoverer
-discoverer = DHT.DHT()
+discoverer = LAN.LAN()
 
 # Create the manager
 # 	Application Name: helloworld
@@ -18,8 +18,8 @@ discoverer = DHT.DHT()
 m = LibPeer.Manager.Manager("helloworld", discoverer, "cachefile")
 
 # Register a network and transport with the manager
-net = m.add_network(ipv4.IPv4, local=False)
-trans = m.add_transport(EDP.EDP)
+net = m.add_network(ipv4.IPv4, local=True)
+trans = m.add_transport(DSTP.DSTP)
 
 def incoming_message(message_object):
 	print
@@ -56,7 +56,7 @@ try:
 
 		else:
 			for peer in m.get_peers():
-				peer.send_message(trans, message*10000).subscribe(send_success, send_fail)
+				peer.send_message(trans, message).subscribe(send_success, send_fail)
 				#print("Sent your message to %s" % str(peer.address))
 
 except Exception:
