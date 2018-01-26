@@ -1,14 +1,13 @@
 import struct
-import binascii
+import hashlib
 import time
 import uuid
+import zlib
 
 CHUNK_SIZE = 4096
 
-
 class Chunk:
     def __init__(self):
-        self.checksum = 0
         self.id = uuid.uuid4().bytes
         self.after = None
         self.data = ""
@@ -16,45 +15,78 @@ class Chunk:
         self.valid = False
 
     def serialise(self):
-        self.checksum = binascii.crc32(self.data)
-
         # Empty UUID if this is first chunk
         after = "\x00" * 16
         if(self.after != None):
             after = self.after
 
-        msg = "%s%s%s%s" % (self.id, after, struct.pack('dl', time.time(), self.checksum), self.data)
-        return msg
+        self.time_sent = time.time()
+
+        chunk = "%s%s%s" % (self.id, after, self.data)
+
+        lite_checksum = zlib.adler32(chunk)
+        hasher = hashlib.md5()
+        hasher.update(chunk)
+        full_checksum = hasher.digest()
+
+        frame = "%s%s%s" % (struct.pack('dl', self.time_sent, lite_checksum), full_checksum, chunk)
+        return frame
+
 
     @staticmethod
-    def from_string(data):
-        _chunk = Chunk()
-        _chunk.id = data[:16]
-        _chunk.after = data[16:32]
-        _chunk.time_sent, _chunk.checksum = struct.unpack('dl', data[32:48])
-        _chunk.data = data[48:]
-        _chunk.valid = _chunk.checksum == binascii.crc32(_chunk.data)
-        return _chunk
+    def from_string(frame):
+        chunk = Chunk()
+        # Timestamp and lite checksum
+        chunk.time_sent, lite_checksum = struct.unpack('dl', frame[:16])
+
+        # Full checksum
+        full_checksum = frame[16:32]
+
+        # Data (the actual chunk part)
+        data = frame[32:]
+
+        # Verify chunk data
+        chunk.valid = lite_checksum == zlib.adler32(data)
+
+        if(chunk.valid):
+            hasher = hashlib.md5()
+            hasher.update(data)
+            chunk.valid = full_checksum == hasher.digest()
+
+        # Chunk ID
+        chunk.id = data[:16]
+
+        # Prior chunk ID
+        chunk.after = data[16:32]
+
+        # Chunk message
+        chunk.data = data[32:]
+
+        return chunk
+
 
     @staticmethod
     def create_chunk(data, after=None):
-        _chunk = Chunk()
-        _chunk.after = after
-        _chunk.valid = True
-        _chunk.data = data
-        return _chunk
+        chunk = Chunk()
+        chunk.after = after
+        chunk.valid = True
+        chunk.data = data
+        return chunk
 
     @staticmethod
     def create_chunks(data, after=None):
         chunks = []
-        while(len(data) != 0):
-            cdata = data[:CHUNK_SIZE]
-            data = data[CHUNK_SIZE:]
-            last = after
-            if(len(chunks) > 0):
-                last = chunks[-1].id
+        c = 0
+        
+        while True:
+            chunk = Chunk.create_chunk(data[CHUNK_SIZE*c : CHUNK_SIZE*(c+1)], after)
+            after = chunk.id
 
-            _chunk = Chunk.create_chunk(cdata, last)
-            chunks.append(_chunk)
+            c += 1
+
+            if(len(chunk.data) == 0):
+                break
+            else:
+                chunks.append(chunk)
 
         return chunks

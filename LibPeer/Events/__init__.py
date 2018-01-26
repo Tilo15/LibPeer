@@ -30,24 +30,26 @@ class Receipt:
 	def __init__(self):
 		self.on_success = None
 		self.on_failure = None
+		self.args = ()
 		self.complete = False
 		self.error = False
 
-	def subscribe(self, success, failure=None):
+	def subscribe(self, success, failure=None, args=()):
 		self.on_success = success
 		self.on_failure = failure
+		self.args = args
 
 	def success(self):
 		self.complete = True
 		if(self.on_success != None):
-			self.on_success()
+			self.on_success(*self.args)
 
 
 	def failure(self, message=""):
 		self.error = True
 		self.complete = True
 		if(self.on_failure != None):
-			self.on_failure(message)
+			self.on_failure(message, *self.args)
 		else:
 			log.error("an error occurred with message '%s', but the Receipt has no failure callback" % message)
 

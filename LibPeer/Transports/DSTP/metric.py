@@ -1,10 +1,12 @@
 import time
+from LibPeer.Logging import log
 
 class Metric:
     def __init__(self, address):
         self.hash = address.get_hash()
         self.dropped_packets = 0
         self.acknowledged_packets = 0
+        self.negative_acknowledged_packets = 0
         self.sent_packets = 0
         self.latency = 0
         self.in_flight = 0
@@ -24,11 +26,21 @@ class Metric:
         self.in_flight -= 1
         self.last_packet_delay = time.time() - time_sent
 
+    def packet_negative_acknowledged(self):
+        self.negative_acknowledged_packets += 1
+
+
     def get_window_size(self):
         delay_factor = (100 - (self.last_packet_delay*1000 - self.latency*1000)) / 100
         window_factor = self.in_flight / self.last_window_size
         gain = delay_factor * window_factor
         self.last_window_size += gain
+        if(self.last_window_size < 5):
+            self.last_window_size = 5
+
+        time.sleep(0.01) # Look, I don't even know why this is helping.
+                         # I had a log statement here, and when I took it out everything fell apart
+                         # So... TODO I guess.
 
         return self.last_window_size
 
