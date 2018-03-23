@@ -38,9 +38,9 @@ class Metric:
         if(self.last_window_size < 5):
             self.last_window_size = 5
 
-        time.sleep(0.01) # Look, I don't even know why this is helping.
-                         # I had a log statement here, and when I took it out everything fell apart
-                         # So... TODO I guess.
+        time.sleep(0.006) # Look, I don't even know why this is helping.
+                          # I had a log statement here, and when I took it out everything fell apart
+                          # So... TODO I guess.
 
         return self.last_window_size
 
