@@ -5,6 +5,7 @@ class Network:
 		self.type = "ProtoType"
 		self.port = 0
 		self.muxer.add_network(self)
+		self.datagram_received = Event()
 
 	def send_datagram(self, message, address):
 		raise NotImplemented()

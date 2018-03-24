@@ -1,6 +1,7 @@
 
 import LibPeer.Networks as Networks
 from LibPeer.Formats import umsgpack, baddress
+from LibPeer.Events import Event
 from twisted.internet import protocol
 from twisted.internet import reactor
 from LibPeer.UPnP import PublicPort
@@ -14,6 +15,7 @@ class IPv4(Networks.Network):
         self.type = "IPv4"
         self.port = 3000  # todo
         self.publicPort = None
+        self.datagram_received = Event()
         if(local):
             while(not PublicPort.is_local_port_free(self.port)):
                 self.port += 1
@@ -46,6 +48,7 @@ class UDP_Helper(protocol.DatagramProtocol):
         _address = baddress.BAddress(
             None, address[0], address[1], address_type="IPv4")
         self.muxer.datagram_received(datagram, _address)
+        self.datagram_received.call(datagram, _address)
 
     def sendDatagram(self, datagram, address):
         self.transport.write(

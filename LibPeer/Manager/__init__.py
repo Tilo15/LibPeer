@@ -14,7 +14,7 @@ import threading
 import sys
 
 class Manager:
-	def __init__(self, application, discoverer, cachePath,):
+	def __init__(self, application, discoverer, cachePath):
 		self.application = application
 		self.threaded = False
 		self.discoverable = False

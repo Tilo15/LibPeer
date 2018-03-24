@@ -36,6 +36,7 @@ class LAN(Discoverer):
         return self._deffered_result(0.1, True)
 
     def get_peers(self, application, label=""):
+        # XXX TODO Implement labels for this discoverer
         return self._deffered_result(0.1, self.samband.get_peers())
 
     def _deffered_result(self, length=0.1,  *args):
