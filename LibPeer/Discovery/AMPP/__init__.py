@@ -50,6 +50,8 @@ class AMPP(Discoverer):
         
         # This is an AMPP packet
         if(message[:4] == "AMPP"):
+            # Set the address protocol
+            address.protocol = "AMPP"
             
             # Store the peer address
             self.ampp_peers[address.get_hash()] = address
