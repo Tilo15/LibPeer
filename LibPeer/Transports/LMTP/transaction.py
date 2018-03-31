@@ -266,7 +266,7 @@ class Transaction:
 
 
     def dechunk_data(self):
-        data = ""
+        data = b""
         # Reconstruct data in order
         for key in sorted(self.chunks.keys()):
             data += self.chunks[key].data
