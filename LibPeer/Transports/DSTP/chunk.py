@@ -23,7 +23,7 @@ class Chunk:
 
         self.time_sent = time.time()
 
-        chunk = b"%s%s%s" % (self.id, after, self.data)
+        chunk = b"%s%s%s" % (self.id, after, sb(self.data))
 
         lite_checksum = zlib.adler32(chunk)
         hasher = hashlib.md5()
