@@ -74,7 +74,7 @@ class AMPP(Discoverer):
                 address_hash = address.get_hash()
                 
                 # Subscribe to these applications on all upstream peers
-                for peer in self.ampp_peers.itervalues():
+                for peer in self.ampp_peers.values():
                     if(peer.get_hash() != address_hash):
                         self.send_datagram("SUB" + umsgpack.packb(subscription.to_dict()), peer)
 
@@ -113,7 +113,7 @@ class AMPP(Discoverer):
 
         self.peer_visible_addresses = {}
 
-        for peer in self.ampp_peers.itervalues():
+        for peer in self.ampp_peers.values():
             self.send_datagram("ADQ", peer)
         
         # Return a result from responses soon
@@ -126,7 +126,7 @@ class AMPP(Discoverer):
 
     def send_advertorial(self, advertorial, excludePeerHash = None):
         count = 0
-        for subscription in self.subscriptions.itervalues():
+        for subscription in self.subscriptions.values():
             if(advertorial.address.protocol in subscription.applications) and (subscription.address.get_hash() != excludePeerHash):
                 count += 1
                 self.send_datagram("ADV" + umsgpack.packb(advertorial.to_dict()), subscription.address)
@@ -146,7 +146,7 @@ class AMPP(Discoverer):
         # Send subscription request to all peers with our local subscriptions
         sub = Subscription()
         sub.applications = self.local_subscriptions
-        for peer in self.ampp_peers.itervalues():
+        for peer in self.ampp_peers.values():
             self.send_datagram("SUB" + umsgpack.packb(sub.to_dict()), peer)
 
 

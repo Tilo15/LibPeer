@@ -21,7 +21,7 @@ class DSTP(Transport):
         self.channel_connections = {}
 
     def send(self, data, address, channel="\x00" * 16):
-    	connection = self.get_or_create_connection(address, channel)
+        connection = self.get_or_create_connection(address, channel)
         return connection.send_data(data)
 
     def parcel_received(self, _parcel):

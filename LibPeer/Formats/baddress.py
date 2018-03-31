@@ -1,4 +1,5 @@
 import hashlib
+import binascii
 
 
 class BAddress:
@@ -12,30 +13,30 @@ class BAddress:
         self.address_type = address_type
 
     def get_binary_address(self):
-        data = b"\x01" + self.protocol
+        data = b"\x01" + self.protocol.encode("utf-8")
         if (self.label != ""):
             if (len(self.label) == BAddress.HASH_LENGTH):
-                data += b"/%s" % self.label
+                data += b"/%s" % self.label.encode("utf-8")
             else:
                 raise ValueError("Invalid label size of %i" % len(self.label))
         else:
             data += b"\x02"
 
-        data += b"%s\x1F%s\x1F%s\x04" % (self.address_type, self.net_address, self.port)
+        data += b"%s\x1F%s\x1F%i\x04" % (self.address_type.encode("utf-8"), self.net_address, self.port)
         return data
 
     @staticmethod
     def from_serialised(data):
-        protocol = ""
-        label = ""
-        body = ""
+        protocol = b""
+        label = b""
+        body = b""
         headerComplete = False
         headerStarted = False
         hashStarted = False
         hashIndex = 0
         for i in range(len(data)):
             if (not headerStarted):
-                if (data[i] == b"\x01"):
+                if (data[i] == 1):
                     headerStarted = True
 
             elif(hashStarted):
@@ -46,15 +47,15 @@ class BAddress:
                     hashStarted = False
 
             elif (not headerComplete):
-                if (data[i] == b"\x02"):
+                if (data[i] == 2):
                     headerComplete = True
-                elif (data[i] == "/"):
+                elif (data[i] == b"/"):
                     hashStarted = True
                 else:
                     protocol += data[i]
 
             else:
-                if (data[i] == b"\x04"):
+                if (data[i] == 4):
                     break
                 else:
                     body += data[i]
@@ -81,7 +82,7 @@ class BAddress:
 
 
     def __str__(self):
-        labelHex = self.label.encode("hex")
+        labelHex = binascii.hexlify(self.label.encode("utf-8"))
         string = "%s[%s://%s:%s/%s]" % (self.address_type, self.protocol, self.net_address, self.port, labelHex)
         return string
 

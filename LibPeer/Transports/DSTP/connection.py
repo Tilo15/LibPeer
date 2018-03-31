@@ -195,7 +195,7 @@ class Connection:
         if(self.connected):
             self.last_send = time.time()
             size = int(self.metric.get_window_size())
-            in_flight = self.in_flight.itervalues()
+            in_flight = self.in_flight.values()
 
             size -= len(self.in_flight)
 
@@ -274,5 +274,5 @@ class Connection:
             
 
     def fail_all_remaining(self, reason):
-        for i in self.receipts.itervalues():
+        for i in self.receipts.values():
             i.failure(reason)

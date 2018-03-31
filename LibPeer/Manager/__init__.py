@@ -57,7 +57,7 @@ class Manager:
 	def run_blocking(self):
 		"""Run the Peer stack on the current thread"""		
 		loop = LoopingCall(self.loop)
-	        loop.start(1)
+		loop.start(1)
 		self.discoverer.start_discoverer(self.discoveryCache).addCallback(self.bootstrap_complete)
 		reactor.run(installSignalHandlers=False)
 

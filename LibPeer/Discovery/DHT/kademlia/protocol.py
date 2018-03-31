@@ -104,7 +104,7 @@ class KademliaProtocol(RPCProtocol):
         """
         if self.router.isNewNode(node):
             ds = []
-            for key, value in self.storage.iteritems():
+            for key, value in self.storage.items():
                 keynode = Node(key)
                 neighbors = self.router.findNeighbors(keynode)
                 if len(neighbors) > 0:

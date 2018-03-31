@@ -99,7 +99,7 @@ started = 0
 
 try:
 	while(True):
-		filename = raw_input("File Name >")
+		filename = input("File Name >")
 		if(filename == "#"):
 			break
 
@@ -110,7 +110,7 @@ try:
 		for i in range(len(peers)):
 			print("%i:  %s" % (i, str(peers[i].address)))
 
-		peer = peers[int(raw_input("Send to Peer No. >"))]
+		peer = peers[int(input("Send to Peer No. >"))]
 		
 		f = open(filename, 'r')
 		started = time.time()

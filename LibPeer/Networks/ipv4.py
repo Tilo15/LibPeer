@@ -33,7 +33,7 @@ class IPv4(Networks.Network):
         self.udp.sendDatagram(message, address)
 
     def get_address(self, peer_suggestion):
-        validation = peer_suggestion.split('.')
+        validation = peer_suggestion.split(b'.')
         valid = len(validation) == 4
         for part in validation:
             valid = valid and len(part) < 4

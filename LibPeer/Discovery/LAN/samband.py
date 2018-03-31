@@ -30,6 +30,11 @@ class Samband(protocol.DatagramProtocol):
             data = umsgpack.unpackb(datagram[8:])
             if(data[0] not in self.seenMessages):
                 self.seenMessages += [data[0],]
+                # If the data is a string for some reason make it bytes
+                for i in range(len(data)):
+                    if(type(data[i]) is str):
+                        data[i] = data[i].encode("utf-8")
+
                 # Verify checksum
                 checksum = hashlib.sha256(data[1] + data[0]).digest()
                 if(checksum == data[2]):
@@ -43,7 +48,7 @@ class Samband(protocol.DatagramProtocol):
 
     def broadcast(self, message):
         messageId = uuid.uuid4()
-        checksum = hashlib.sha256(message + str(messageId)).digest()
+        checksum = hashlib.sha256(message + messageId.bytes).digest()
         data = umsgpack.packb([str(messageId), str(message), checksum])
         txdata = b'\xF0\x9F\x87\xAE\xF0\x9F\x87\xB8' + data
         self.transport.write(txdata, ("224.0.0.63", 1944))
