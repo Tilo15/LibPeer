@@ -44,8 +44,6 @@ class Muxer:
                     log.error("protocol not registered")
             else:
                 log.debug("dropping duplicate parcel")
-        else:
-            log.warn("malformed parcel header")
 
 
     def send_parcel(self, parcel):

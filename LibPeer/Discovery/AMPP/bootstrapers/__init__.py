@@ -2,6 +2,7 @@
 class Bootstrapper:
     def __init__(self):
         self.network_type = "" # Eg. IPv4
+        self.recommended_advertise_interval = 10
     
     def get_ampp_peers(self):
         '''Returns a deffered result of a list of BAddresses'''

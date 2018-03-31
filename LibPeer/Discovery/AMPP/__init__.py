@@ -11,7 +11,7 @@ from twisted.internet import reactor, defer
 
 class AMPP(Discoverer):
     def __init__(self, applications, broadcast_ttl = 30):
-        self.recommended_rebroadcast_interval = 60
+        self.recommended_rebroadcast_interval = 10 # TODO change to more reasonable number
         self.networks = {}
         self.subscriptions = {}
         self.local_subscriptions = applications
@@ -21,7 +21,7 @@ class AMPP(Discoverer):
         self.running = False
         self.bootstrappers = []
         self.bootstrappers_to_test = 0
-        self.peer_visible_addresses = []
+        self.peer_visible_addresses = {}
 
     def add_network(self, network):
         log.debug("Network of type %s registered" % network.type)
@@ -88,14 +88,14 @@ class AMPP(Discoverer):
             elif(message[4:7] == "ADR"):
                 # Got an address
                 reported_address = BAddress.from_serialised(message[7:])
-                log.debug("%s sees us as %s" % address, reported_address)
-                self.peer_visible_addresses = reported_address.net_address
+                log.debug("%s sees us as %s" % (address, reported_address))
+                self.peer_visible_addresses[reported_address.get_hash()] = reported_address.net_address
 
 
     def get_address(self):
         deferred = defer.Deferred()
 
-        self.peer_visible_addresses = []
+        self.peer_visible_addresses = {}
 
         for peer in self.ampp_peers.itervalues():
             self.send_datagram("ADQ", peer)
@@ -105,7 +105,7 @@ class AMPP(Discoverer):
         return deferred
 
     def check_address_query_timeout(self, deferred):
-        deferred.callback(self.peer_visible_addresses)
+        deferred.callback(self.peer_visible_addresses.itervalues())
 
 
     def send_advertorial(self, advertorial):
@@ -118,7 +118,7 @@ class AMPP(Discoverer):
         if(address.address_type in self.networks):
             self.networks[address.address_type].send_datagram("AMPP" + message, address)
         else:
-            log.error("Failed to send datagram to '%s', no network of that type available" & address)
+            log.error("Failed to send datagram to '%s', no network of that type available" % address)
 
 
     def subscribe(self):
@@ -126,7 +126,7 @@ class AMPP(Discoverer):
         sub = Subscription()
         sub.applications = self.local_subscriptions
         for peer in self.ampp_peers:
-            self.send_datagram("SUB" + umsgpack.packb(sub.to_dict()))
+            self.send_datagram("SUB" + umsgpack.packb(sub.to_dict()), peer)
 
 
     def deffered_result(self, length=0.1,  *args):
