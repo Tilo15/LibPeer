@@ -6,6 +6,7 @@ from LibPeer.Discovery.DHT.kademlia.network import Server
 from LibPeer.Discovery import Discoverer
 from LibPeer.Discovery.DHT import meta_discoverer
 from LibPeer.UPnP import PublicPort
+from LibPeer.Formats import baddress
 import psutil
 import os
 

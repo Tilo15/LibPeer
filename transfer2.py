@@ -1,4 +1,5 @@
 
+from LibPeer.Discovery import AMPP
 from LibPeer.Discovery import LAN
 from LibPeer.Transports import DSTP
 from LibPeer.Networks import ipv4
@@ -8,10 +9,11 @@ import traceback
 import time
 import os
 
-log.settings(True, 1)
+log.settings(True, 0)
 
 # Create the discoverer
-discoverer = LAN.LAN()
+discoverer = AMPP.AMPP(["badftp2"])
+#discoverer = LAN.LAN()
 
 # Create the manager
 # 	Application Name: badftp2
@@ -22,6 +24,9 @@ m = LibPeer.Manager.Manager("badftp2", discoverer, "cachefile")
 # Register a network and transport with the manager
 net = m.add_network(ipv4.IPv4, local=True)
 trans = m.add_transport(DSTP.DSTP)
+
+# Also add the network to the AMPP discoverer
+discoverer.add_network(net)
 
 incoming = {}
 

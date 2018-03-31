@@ -10,12 +10,12 @@ from LibPeer.Logging import log
 
 class IPv4(Networks.Network):
     def __init__(self, muxer, local=False):
-        self.udp = UDP_Helper(muxer)
+        self.datagram_received = Event()
+        self.udp = UDP_Helper(muxer, self.datagram_received)
         self.muxer = muxer
         self.type = "IPv4"
         self.port = 3000  # todo
         self.publicPort = None
-        self.datagram_received = Event()
         if(local):
             while(not PublicPort.is_local_port_free(self.port)):
                 self.port += 1
@@ -33,7 +33,16 @@ class IPv4(Networks.Network):
         self.udp.sendDatagram(message, address)
 
     def get_address(self, peer_suggestion):
-        return (peer_suggestion, self.port)
+        validation = peer_suggestion.split('.')
+        valid = len(validation) == 4
+        for part in validation:
+            valid = valid and len(part) < 4
+
+        # Only return an address if it is a valid IPv4 address
+        if(valid):
+            return (peer_suggestion, self.port)
+        else:
+            return None
 
     def close(self):
         if(self.publicPort):
@@ -41,7 +50,8 @@ class IPv4(Networks.Network):
 
 
 class UDP_Helper(protocol.DatagramProtocol):
-    def __init__(self, muxer):
+    def __init__(self, muxer, datagram_received):
+        self.datagram_received = datagram_received
         self.muxer = muxer
 
     def datagramReceived(self, datagram, address):

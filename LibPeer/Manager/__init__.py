@@ -118,13 +118,16 @@ class Manager:
 		for address_suggestion in addresses:
 			for network in self.muxer.networks.values():
 				net_address = network.get_address(address_suggestion)
-				peer_address = baddress.BAddress(self.application, net_address[0], net_address[1], address_type=network.type)
-				self.discoverer.advertise(peer_address).addCallback(self.advertised)
-				self.advertised_address_hashes.add(peer_address.get_hash())
-				for label in self.labels:
-					peer_address = baddress.BAddress(self.application, net_address[0], net_address[1], label, network.type)
+				if(type(net_address) is tuple):
+					peer_address = baddress.BAddress(self.application, net_address[0], net_address[1], address_type=network.type)
 					self.discoverer.advertise(peer_address).addCallback(self.advertised)
 					self.advertised_address_hashes.add(peer_address.get_hash())
+					for label in self.labels:
+						peer_address = baddress.BAddress(self.application, net_address[0], net_address[1], label, network.type)
+						self.discoverer.advertise(peer_address).addCallback(self.advertised)
+						self.advertised_address_hashes.add(peer_address.get_hash())
+				else:
+					log.debug("Address suggestion '%s' rejected by %s network controller" % (address_suggestion, network.type))
 
 
 	def advertised(self, res):
