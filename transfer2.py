@@ -34,7 +34,7 @@ def incoming_message(message_object):
 	to_process = message_object.data
 	peer = message_object.peer.address.get_hash()
 
-	if(peer not in incoming and to_process[0] == "F"):
+	if(peer not in incoming and to_process[:1] == b"F"):
 		to_process = to_process[1:]
 
 		# Get details
@@ -44,9 +44,9 @@ def incoming_message(message_object):
 		while True:
 			c = to_process[0]
 			to_process = to_process[1:]
-			if(c == ":"):
+			if(c == b":"[0]):
 				is_size = True
-			elif(c == "\n"):
+			elif(c == b"\n"[0]):
 				break
 			elif(is_size):
 				size += c

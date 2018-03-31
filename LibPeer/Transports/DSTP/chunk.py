@@ -31,9 +31,6 @@ class Chunk:
         full_checksum = hasher.digest()
 
         frame = b"%s%s%s" % (struct.pack('dl', self.time_sent, lite_checksum), full_checksum, chunk)
-        
-        if (Chunk.from_string(frame).valid):
-            print("VALID")
 
         return frame
 
