@@ -49,12 +49,12 @@ class AMPP(Discoverer):
             return
         
         # This is an AMPP packet
-        if(self.message[:4] == "AMPP"):
+        if(message[:4] == "AMPP"):
             
             # Store the peer address
             self.ampp_peers[address.get_hash()] = address
 
-            if(self.message[4:7] == "SUB"):
+            if(message[4:7] == "SUB"):
 
                 # Deserialise Subscribe Request
                 subscription = Subscription.from_dict(umsgpack.unpackb(message[7:]))
@@ -68,7 +68,7 @@ class AMPP(Discoverer):
                         self.send_datagram("SUB" + umsgpack.packb(subscription.to_dict()), peer)
 
 
-            elif(self.message[4:7] == "ADV"):
+            elif(message[4:7] == "ADV"):
                 # Deserialise Advertise Request
                 advertorial = Advertorial.from_dict(umsgpack.unpackb(message[7:]))
 
@@ -79,13 +79,13 @@ class AMPP(Discoverer):
                 if(advertorial.application in self.local_subscriptions):
                     self.store_advertorial(advertorial)
 
-            elif(self.message[4:7] == "ADQ"):
+            elif(message[4:7] == "ADQ"):
                 # Address request
                 self.send_datagram("ADR" + address.get_binary_address(), address)
 
-            elif(self.message[4:7] == "ADR"):
+            elif(message[4:7] == "ADR"):
                 # Got an address
-                reported_address = BAddress.from_serialised(self.message[7:])
+                reported_address = BAddress.from_serialised(message[7:])
                 log.debug("%s sees us as %s" % address, reported_address)
                 self.peer_visible_addresses = reported_address.net_address
 
