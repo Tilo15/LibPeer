@@ -3,6 +3,7 @@ from LibPeer.Discovery import LAN
 from LibPeer.Transports import EDP
 from LibPeer.Networks import ipv4
 from LibPeer.Logging import log
+from LibPeer.Formats import butil
 import LibPeer.Manager
 import traceback
 
@@ -24,7 +25,7 @@ trans = m.add_transport(EDP.EDP)
 def incoming_message(message_object):
 	print
 	print("New message from %s:" % str(message_object.peer.address))
-	print("    %s" % message_object.data)
+	print("    %s" % butil.b2s(message_object.data))
 	print
 
 def send_fail(message):
