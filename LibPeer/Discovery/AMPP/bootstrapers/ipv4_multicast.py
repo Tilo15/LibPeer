@@ -7,6 +7,7 @@ from twisted.internet import reactor, defer
 class IPv4_Multicast(Bootstrapper):
     def __init__(self):
         self.network_type = "IPv4"
+        self.recommended_advertise_interval = 10
         self.discoverer = LAN()
         self.discoverer.start_discoverer(None).addCallback(self.discoverer_ready)
 
@@ -24,13 +25,15 @@ class IPv4_Multicast(Bootstrapper):
     def advertise(self, network):
         deferred = defer.Deferred()
         log.debug("Querying for local IPv4 address")
-        self.discoverer.get_address().addCallback(deferred, network)
+        self.discoverer.get_address().addCallback(self.got_address, deferred, network)
         return deferred
 
-    def got_address(self, address, deferred, network):
-        result = network.get_address(address)
-        if(type(result) is tuple):
-            self.discoverer.advertise(baddress.BAddress("AMPP", result[0], result[1], address_type=network.type)).addCallback(deferred.callback)
-        else:
-            log.warn("LAN discoverer returned an invalid IPv4 address")
-            deferred.callback(False)
+    def got_address(self, addresses, deferred, network):
+        for address in addresses:
+            result = network.get_address(address)
+            if(type(result) is tuple):
+                self.discoverer.advertise(BAddress("AMPP", result[0], result[1], address_type=network.type))
+            else:
+                log.warn("LAN discoverer returned an invalid IPv4 address")
+        
+        deferred.callback(True)

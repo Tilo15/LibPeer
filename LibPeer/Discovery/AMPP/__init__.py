@@ -174,6 +174,16 @@ class AMPP(Discoverer):
         
         return deferred
 
+    def run_bootstrapper_advertise(self, bootstrapper):
+        if(self.running):
+            log.debug("Advertising AMPP on %s interface" % bootstrapper.network_type)
+            net = self.networks[bootstrapper.network_type]
+            bootstrapper.advertise(net).addCallback(self.boostrapper_finished_run, bootstrapper)
+
+    def boostrapper_finished_run(self, success, bootstrapper):
+            reactor.callLater(bootstrapper.recommended_advertise_interval, self.run_bootstrapper_advertise, bootstrapper)
+
+
     def boostrapper_available_result(self, result, bootstrapper, deferred):
         log.debug("Bootstraper test completed")
         # If the test succeeded, add to our list of available bootstrappers
@@ -186,6 +196,12 @@ class AMPP(Discoverer):
         self.bootstrappers_to_test -= 1
         if(self.bootstrappers_to_test == 0):
             self.running = True
+
+            # Start advertising
+            for bs in self.bootstrappers:
+                self.run_bootstrapper_advertise(bs)
+            
+            # Finally, pass the all clear to the caller of start_discoverer
             deferred.callback(True)
 
     def stop_discoverer(self):
