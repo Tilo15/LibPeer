@@ -46,7 +46,7 @@ try:
 	while(True):
 		print
 		print("Type a message:")
-		message = raw_input()
+		message = input()
 		if(message == "#"):
 			break
 
