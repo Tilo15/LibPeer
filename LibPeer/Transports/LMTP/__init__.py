@@ -3,6 +3,7 @@ from LibPeer.Muxer import parcel
 from LibPeer.Transports import Transport
 from LibPeer.Transports.LMTP import transaction
 from LibPeer.Logging import log
+from LibPeer.Formats.butil import *
 import uuid
 
 # Large Message Transport Protocol
@@ -20,7 +21,7 @@ class LMTP(Transport):
 		self.transactions = {}
 		self.oldTransactions = set()
 
-	def send(self, data, address, channel="\x00"*16):
+	def send(self, data, address, channel=b"\x00"*16):
         # Run modifiers
 		data = self.mod_encode(address, data)
 
@@ -50,10 +51,10 @@ class LMTP(Transport):
 			self.transactions[id].data_received(data)
 		
 		elif(id in self.oldTransactions):
-			log.debug("ignoring parcel for transaction '%s' which has already completed" % id.encode("hex"))
+			log.debug("ignoring parcel for transaction '%s' which has already completed" % ss(id.encode("hex")))
 
 		else:
-			log.debug("got new transaction with id '%s'" % id.encode("hex"))
+			log.debug("got new transaction with id '%s'" % ss(id.encode("hex")))
 			# Create new transaction to service parcel
 			trans = transaction.Transaction(id, _parcel.address, _parcel.channel, self.transaction_send, self.delay_target)
 
@@ -86,4 +87,4 @@ class LMTP(Transport):
 	def transaction_canceled(self, id):
 		self.oldTransactions.add(id)
 		del self.transactions[id]
-		log.info("transaction '%s' canceled" % id.encode("hex"))
+		log.info("transaction '%s' canceled" % ss(id.encode("hex")))
