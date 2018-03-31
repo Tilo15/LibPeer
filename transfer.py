@@ -22,6 +22,8 @@ m = LibPeer.Manager.Manager("badftp", discoverer, "cachefile")
 net = m.add_network(ipv4.IPv4, local=False)
 trans = m.add_transport(LMTP.LMTP)
 
+discoverer.add_network(net)
+
 def incoming_message(message_object):
 	print("New message from %s:" % str(message_object.peer.address))
 	f = open("incoming", 'wb')
