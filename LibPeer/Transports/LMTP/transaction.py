@@ -215,7 +215,7 @@ class Transaction:
             self.send(self, b"\x05\x06")
             log.debug("accepted request to receive %i chunks" % self.size)
 
-        elif(data == "\x04"): # EOT
+        elif(data == b"\x04"): # EOT
             # Sender has finished sending and wants to stop all communications
             self.send(self, b"\x05\x04\x06")
             self.connected = False
