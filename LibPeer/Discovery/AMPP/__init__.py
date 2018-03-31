@@ -64,7 +64,6 @@ class AMPP(Discoverer):
 
                 # Check to see if we have already received this message before
                 if(subscription.id in self.subscription_forwarded_ids):
-                    log.debug("Ignoring duplicate subscription request")
                     return
 
                 # Add it if not
@@ -92,7 +91,7 @@ class AMPP(Discoverer):
                 self.advertorial_forwarded_ids.add(advertorial.id)
 
                 # Forward the message onto any peers who are subscribed to this application type
-                self.send_advertorial(advertorial)
+                self.send_advertorial(advertorial, address.get_hash())
 
                 # If we are listening for this application, store it
                 if(advertorial.address.protocol in self.local_subscriptions):
@@ -125,13 +124,15 @@ class AMPP(Discoverer):
         deferred.callback(self.peer_visible_addresses.values())
 
 
-    def send_advertorial(self, advertorial):
+    def send_advertorial(self, advertorial, excludePeerHash = None):
         count = 0
         for subscription in self.subscriptions.itervalues():
-            if(advertorial.address.protocol in subscription.applications):
+            if(advertorial.address.protocol in subscription.applications) and (subscription.address.get_hash() != excludePeerHash):
                 count += 1
                 self.send_datagram("ADV" + umsgpack.packb(advertorial.to_dict()), subscription.address)
-        log.debug("Sent advertorial to %i peers" % count)
+
+        if(excludePeerHash == None):
+            log.debug("Sent advertorial to %i peers" % count)
 
 
     def send_datagram(self, message, address):
