@@ -58,4 +58,4 @@ class ImmediateReceipt(Receipt):
 	def subscribe(self, success, failure=None):
 		self.on_success = success
 		self.on_failure = failure
-		self.succeeded()
+		self.success()
