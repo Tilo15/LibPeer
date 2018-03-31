@@ -160,7 +160,7 @@ class Transaction:
         if(self.window_size < 1):
             self.window_size = 1
 
-        log.debug("Latency: %.8f\tGain: %.2f\tWindow: %i\tSent: %i\tAcknowledged: %i\tIn Flight: %i\tDelay: %.4fs\tTransfered: %.0f%%" % stf(self.latency, gain, self.window_size, self.sent_chunks, self.acknowledgements, len(self.chunks_in_flight), (time.time() - timestamp), (self.acknowledgements/float(self.size))*100))
+        log.info("Latency: %.8f\tGain: %.2f\tWindow: %i\tSent: %i\tAcknowledged: %i\tIn Flight: %i\tDelay: %.4fs\tTransfered: %.0f%%" % stf(self.latency, gain, self.window_size, self.sent_chunks, self.acknowledgements, len(self.chunks_in_flight), (time.time() - timestamp), (self.acknowledgements/float(self.size))*100))
 
     def connect(self):
         # Connect request with size of data
