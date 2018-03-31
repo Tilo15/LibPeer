@@ -6,6 +6,7 @@ import LibPeer.Events
 import struct
 import time
 import random
+import binascii
 
 class Transaction:
     TIMEOUT_CONNECTION = 30
@@ -66,7 +67,7 @@ class Transaction:
             self.chunk_acknowledged(data[1:])
 
         else:
-            log.warn("invalid control code received")
+            log.warn("invalid control code (%s) received" % b2s(binascii.hexlify(cc)))
 
 
 
