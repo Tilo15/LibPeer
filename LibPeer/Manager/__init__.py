@@ -9,6 +9,7 @@ from LibPeer.Transports import ping
 from LibPeer.Manager import peer
 from LibPeer.Manager import message
 from LibPeer.Formats import baddress
+from LibPeer.Formats.butil import b2s
 
 import threading
 import sys
@@ -114,7 +115,7 @@ class Manager:
 
 	def broadcast_address(self, addresses):
 		log.debug("We appear as the following addresses to our peers:")
-		log.debug("    " + ', '.join(addresses))
+		log.debug("    " +  b2s(b', '.join(addresses)))
 		for address_suggestion in addresses:
 			for network in self.muxer.networks.values():
 				net_address = network.get_address(address_suggestion)
