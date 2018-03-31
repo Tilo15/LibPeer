@@ -115,7 +115,7 @@ class Manager:
 
 	def broadcast_address(self, addresses):
 		log.debug("We appear as the following addresses to our peers:")
-		log.debug("    " +  sb(b', '.join(addresses)))
+		log.debug("    " +  ss(b', '.join(addresses)))
 		for address_suggestion in addresses:
 			for network in self.muxer.networks.values():
 				net_address = network.get_address(address_suggestion)
