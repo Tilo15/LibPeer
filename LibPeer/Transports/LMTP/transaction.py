@@ -1,10 +1,12 @@
 from twisted.internet import reactor, task
 from LibPeer.Logging import log
 from LibPeer.Transports.LMTP import chunk
+from LibPeer.Formats.butil import *
 import LibPeer.Events
 import struct
 import time
 import random
+import binascii
 
 class Transaction:
     TIMEOUT_CONNECTION = 30
@@ -65,7 +67,7 @@ class Transaction:
             self.chunk_acknowledged(data[1:])
 
         else:
-            log.warn("invalid control code received")
+            log.warn("invalid control code (%s) received" % b2s(binascii.hexlify(cc)))
 
 
 
@@ -159,7 +161,7 @@ class Transaction:
         if(self.window_size < 1):
             self.window_size = 1
 
-        log.debug("Latency: %.8f\tGain: %.2f\tWindow: %i\tSent: %i\tAcknowledged: %i\tIn Flight: %i\tDelay: %.4fs\tTransfered: %.0f%%" % (self.latency, gain, self.window_size, self.sent_chunks, self.acknowledgements, len(self.chunks_in_flight), (time.time() - timestamp), (self.acknowledgements/float(self.size))*100))
+        log.info("Latency: %.8f\tGain: %.2f\tWindow: %i\tSent: %i\tAcknowledged: %i\tIn Flight: %i\tDelay: %.4fs\tTransfered: %.0f%%" % stf(self.latency, gain, self.window_size, self.sent_chunks, self.acknowledgements, len(self.chunks_in_flight), (time.time() - timestamp), (self.acknowledgements/float(self.size))*100))
 
     def connect(self):
         # Connect request with size of data
@@ -213,7 +215,7 @@ class Transaction:
             self.send(self, b"\x05\x06")
             log.debug("accepted request to receive %i chunks" % self.size)
 
-        elif(data == "\x04"): # EOT
+        elif(data == b"\x04"): # EOT
             # Sender has finished sending and wants to stop all communications
             self.send(self, b"\x05\x04\x06")
             self.connected = False
@@ -222,14 +224,14 @@ class Transaction:
 
         elif(data[:2] == b"\x16\x05"): # SYN ENQ
             # Sender wants to know the current time
-            self.send(self, b"\x05\x16\x06" + struct.pack("Q", time.time()))
+            self.send(self, b"\x05\x16\x06" + struct.pack("d", time.time()))
             log.debug("sent current time to sender")
 
         elif(data[:2] == b"\x16\x06"): # SYN ACK
             # Receiver has sent us their current time
             if(self.time_request_time != 0):
                 # We were waiting for this
-                remote_time = struct.unpack("Q", data[2:])[0]
+                remote_time = struct.unpack("d", data[2:])[0]
                 current_time = time.time()
                 clock_difference = remote_time - self.time_request_time
                 current_time += clock_difference
@@ -264,9 +266,9 @@ class Transaction:
 
 
     def dechunk_data(self):
-        data = ""
+        data = b""
         # Reconstruct data in order
-        for key in sorted(self.chunks.iterkeys()):
+        for key in sorted(self.chunks.keys()):
             data += self.chunks[key].data
         
         return data

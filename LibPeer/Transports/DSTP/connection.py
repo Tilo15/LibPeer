@@ -4,6 +4,7 @@ from LibPeer.Transports.DSTP.metric import Metric
 from LibPeer.Transports.DSTP.chunk import Chunk
 from LibPeer.Events import Event
 from LibPeer.Logging import log
+from LibPeer.Formats.butil import *
 import time
 import struct
 
@@ -30,26 +31,26 @@ class Connection:
         self.to_send = []
         self.in_flight = {}
         self.receipts = {}
-        self.last_chunk = "\x00" * 16
+        self.last_chunk = b"\x00" * 16
         self.last_send = 0
         # RX
         self.received = {}
         self.forgotten = set()
-        self.forgotten.add("\x00" * 16)
+        self.forgotten.add(b"\x00" * 16)
         self.assembling = False
         self.assemble_queue = []
 
         self.new_data = Event()
 
-    MESSAGE_CONNECT_REQUEST = "\x05"
-    MESSAGE_CONNECT_ACCEPT = "\x0D"
-    MESSAGE_DISCONNECT = "\x18"
-    MESSAGE_RESET = "\x10"
-    MESSAGE_PING = "\x50"
-    MESSAGE_PONG = "\x70"
-    MESSAGE_CHUNK = "\x02"
-    MESSAGE_CHUNK_ACKNOWLEDGE = "\x06"
-    MESSAGE_CHUNK_NEGATIVE_ACKNOWLEDGE = "\x15"
+    MESSAGE_CONNECT_REQUEST = b"\x05"
+    MESSAGE_CONNECT_ACCEPT = b"\x0D"
+    MESSAGE_DISCONNECT = b"\x18"
+    MESSAGE_RESET = b"\x10"
+    MESSAGE_PING = b"\x50"
+    MESSAGE_PONG = b"\x70"
+    MESSAGE_CHUNK = b"\x02"
+    MESSAGE_CHUNK_ACKNOWLEDGE = b"\x06"
+    MESSAGE_CHUNK_NEGATIVE_ACKNOWLEDGE = b"\x15"
 
     def process_message(self, data):
         ident = data[:1]
@@ -115,7 +116,7 @@ class Connection:
                 self.do_send()
 
     def send_message(self, type, data = ""):
-        self.send(self, "%s%s" % (type, data))
+        self.send(self, concatb(type, data))
 
     def process_chunk(self, data=""):
         # Create the chunk object
@@ -157,7 +158,7 @@ class Connection:
             self.assemble_queue.append(chunk)
         else:
             self.assembling = True
-            data = ""
+            data = b""
             while True:
                 if(chunk.id not in self.received):
                     # Chunk already processed, line up another
@@ -195,7 +196,7 @@ class Connection:
         if(self.connected):
             self.last_send = time.time()
             size = int(self.metric.get_window_size())
-            in_flight = self.in_flight.itervalues()
+            in_flight = self.in_flight.values()
 
             size -= len(self.in_flight)
 
@@ -274,5 +275,5 @@ class Connection:
             
 
     def fail_all_remaining(self, reason):
-        for i in self.receipts.itervalues():
+        for i in self.receipts.values():
             i.failure(reason)

@@ -9,7 +9,7 @@ import traceback
 import time
 import os
 
-log.settings(True, 1)
+log.settings(True, 0)
 
 # Create the discoverer
 discoverer = AMPP.AMPP(["badftp2"])
@@ -34,19 +34,19 @@ def incoming_message(message_object):
 	to_process = message_object.data
 	peer = message_object.peer.address.get_hash()
 
-	if(peer not in incoming and to_process[0] == "F"):
+	if(peer not in incoming and to_process[:1] == b"F"):
 		to_process = to_process[1:]
 
 		# Get details
 		is_size = False
-		size = ""
-		name = ""
+		size = b""
+		name = b""
 		while True:
-			c = to_process[0]
+			c = to_process[:1]
 			to_process = to_process[1:]
-			if(c == ":"):
+			if(c == b":"):
 				is_size = True
-			elif(c == "\n"):
+			elif(c == b"\n"):
 				break
 			elif(is_size):
 				size += c
@@ -54,7 +54,7 @@ def incoming_message(message_object):
 				name += c
 
 		size = int(size)
-		f = open(name, 'w')
+		f = open(name, 'wb')
 		incoming[peer] = [name, size, 0, f]
 
 	if(len(to_process) > 0 and peer in incoming):
@@ -99,7 +99,7 @@ started = 0
 
 try:
 	while(True):
-		filename = raw_input("File Name >")
+		filename = input("File Name >")
 		if(filename == "#"):
 			break
 
@@ -110,9 +110,9 @@ try:
 		for i in range(len(peers)):
 			print("%i:  %s" % (i, str(peers[i].address)))
 
-		peer = peers[int(raw_input("Send to Peer No. >"))]
+		peer = peers[int(input("Send to Peer No. >"))]
 		
-		f = open(filename, 'r')
+		f = open(filename, 'rb')
 		started = time.time()
 
 		outgoing[filename] = f

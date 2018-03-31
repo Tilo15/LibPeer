@@ -1,8 +1,9 @@
 
 from LibPeer.Discovery import LAN
-from LibPeer.Transports import DSTP
+from LibPeer.Transports import EDP
 from LibPeer.Networks import ipv4
 from LibPeer.Logging import log
+from LibPeer.Formats import butil
 import LibPeer.Manager
 import traceback
 
@@ -19,12 +20,12 @@ m = LibPeer.Manager.Manager("helloworld", discoverer, "cachefile")
 
 # Register a network and transport with the manager
 net = m.add_network(ipv4.IPv4, local=True)
-trans = m.add_transport(DSTP.DSTP)
+trans = m.add_transport(EDP.EDP)
 
 def incoming_message(message_object):
 	print
 	print("New message from %s:" % str(message_object.peer.address))
-	print("    %s" % message_object.data)
+	print("    %s" % butil.b2s(message_object.data))
 	print
 
 def send_fail(message):
@@ -46,7 +47,7 @@ try:
 	while(True):
 		print
 		print("Type a message:")
-		message = raw_input()
+		message = input()
 		if(message == "#"):
 			break
 

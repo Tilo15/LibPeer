@@ -1,4 +1,6 @@
 import hashlib
+import binascii
+from LibPeer.Formats.butil import *
 
 
 class BAddress:
@@ -12,30 +14,30 @@ class BAddress:
         self.address_type = address_type
 
     def get_binary_address(self):
-        data = b"\x01" + self.protocol
+        data = b"\x01" + sb(self.protocol)
         if (self.label != ""):
             if (len(self.label) == BAddress.HASH_LENGTH):
-                data += b"/%s" % self.label
+                data += b"/%s" % sb(self.label)
             else:
                 raise ValueError("Invalid label size of %i" % len(self.label))
         else:
             data += b"\x02"
 
-        data += b"%s\x1F%s\x1F%s\x04" % (self.address_type, self.net_address, self.port)
+        data += b"%s\x1F%s\x1F%i\x04" % (sb(self.address_type), sb(self.net_address), self.port)
         return data
 
     @staticmethod
-    def from_serialised(data):
-        protocol = ""
-        label = ""
-        body = ""
+    def from_serialised(data):        
+        protocol = b""
+        label = b""
+        body = b""
         headerComplete = False
         headerStarted = False
         hashStarted = False
         hashIndex = 0
         for i in range(len(data)):
             if (not headerStarted):
-                if (data[i] == b"\x01"):
+                if (data[i] == 1):
                     headerStarted = True
 
             elif(hashStarted):
@@ -46,21 +48,21 @@ class BAddress:
                     hashStarted = False
 
             elif (not headerComplete):
-                if (data[i] == b"\x02"):
+                if (data[i] == 2):
                     headerComplete = True
-                elif (data[i] == "/"):
+                elif (data[i] == 47): # Ascii '/'
                     hashStarted = True
                 else:
-                    protocol += data[i]
+                    protocol += bytes([data[i]])
 
             else:
-                if (data[i] == b"\x04"):
+                if (data[i] == 4):
                     break
                 else:
-                    body += data[i]
+                    body += bytes([data[i]])
 
         bodyData = body.split(b"\x1F")
-        return BAddress(protocol, bodyData[1], bodyData[2], label, bodyData[0])
+        return BAddress(ss(protocol), ss(bodyData[1]), int(ss(bodyData[2])), ss(label), ss(bodyData[0]))
 
     @staticmethod
     def array_from_serialised(data, application=""):
@@ -77,12 +79,16 @@ class BAddress:
             return addresses
 
     def get_hash(self):
-        return hashlib.sha256(self.address_type + self.net_address + str(self.port)).digest()
+        return hashlib.sha256(concatb(self.address_type, self.net_address, str(self.port))).digest()
 
 
     def __str__(self):
-        labelHex = self.label.encode("hex")
-        string = "%s[%s://%s:%s/%s]" % (self.address_type, self.protocol, self.net_address, self.port, labelHex)
+        string = ""
+        if(self.protocol != None):
+            labelHex = binascii.hexlify(sb(self.label))
+            string = "%s[%s://%s:%s/%s]" % st(self.address_type, self.protocol, self.net_address, str(self.port), labelHex)
+        else:
+            string = "%s[%s:%s]" % st(self.address_type, self.net_address, str(self.port))
         return string
 
 

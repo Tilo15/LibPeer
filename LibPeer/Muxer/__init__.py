@@ -4,6 +4,7 @@ import uuid
 from LibPeer.Logging import log
 from LibPeer.Muxer import parcel
 from LibPeer.Formats import baddress
+from LibPeer.Formats.butil import *
 
 
 class Muxer:
@@ -29,9 +30,9 @@ class Muxer:
             messageId = message[3:19]
             messageChannel = message[19:35]
             messageTransportProtocol = message[35:36]
-            messageApplicationProtocol = message[36:message[36:].find("\x02") + 36]
+            messageApplicationProtocol = message[36:message[36:].find(b"\x02") + 36]
             address.protocol = messageApplicationProtocol
-            message = message[message[36:].find("\x02") + 37:]
+            message = message[message[36:].find(b"\x02") + 37:]
 
             if(messageId not in self.receivedMessages):
                 self.receivedMessages.append(messageId)
@@ -47,7 +48,7 @@ class Muxer:
 
 
     def send_parcel(self, parcel):
-        message = b'MXR' + uuid.uuid4().bytes + parcel.channel + parcel.protocol + parcel.address.protocol + b'\x02' + parcel.message
+        message = b'MXR' + uuid.uuid4().bytes + parcel.channel + parcel.protocol + sb(parcel.address.protocol) + b'\x02' + parcel.message
         return self.networks[parcel.address.address_type].send_datagram(message, parcel.address)
         
             

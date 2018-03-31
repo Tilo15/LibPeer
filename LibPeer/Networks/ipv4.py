@@ -6,6 +6,7 @@ from twisted.internet import protocol
 from twisted.internet import reactor
 from LibPeer.UPnP import PublicPort
 from LibPeer.Logging import log
+from LibPeer.Formats.baddress import *
 
 
 class IPv4(Networks.Network):
@@ -33,7 +34,7 @@ class IPv4(Networks.Network):
         self.udp.sendDatagram(message, address)
 
     def get_address(self, peer_suggestion):
-        validation = peer_suggestion.split('.')
+        validation = sb(peer_suggestion).split(b'.')
         valid = len(validation) == 4
         for part in validation:
             valid = valid and len(part) < 4

@@ -1,5 +1,5 @@
 
-from LibPeer.Discovery import DHT
+from LibPeer.Discovery import AMPP
 from LibPeer.Transports import LMTP
 from LibPeer.Networks import ipv4
 from LibPeer.Logging import log
@@ -10,7 +10,7 @@ import time
 log.settings(True, 0)
 
 # Create the discoverer
-discoverer = DHT.DHT()
+discoverer = AMPP.AMPP(["badftp"])
 
 # Create the manager
 # 	Application Name: helloworld
@@ -22,9 +22,11 @@ m = LibPeer.Manager.Manager("badftp", discoverer, "cachefile")
 net = m.add_network(ipv4.IPv4, local=False)
 trans = m.add_transport(LMTP.LMTP)
 
+discoverer.add_network(net)
+
 def incoming_message(message_object):
 	print("New message from %s:" % str(message_object.peer.address))
-	f = open("incoming", 'w')
+	f = open("incoming", 'wb')
 	f.write(message_object.data)
 	f.close()
 	print("Saved to 'incoming'")
@@ -51,7 +53,7 @@ started = 0
 
 try:
 	while(True):
-		filename = raw_input("File Name >")
+		filename = input("File Name >")
 		if(filename == "#"):
 			break
 
@@ -62,9 +64,9 @@ try:
 		for i in range(len(peers)):
 			print("%i:  %s" % (i, str(peers[i].address)))
 
-		peer = peers[int(raw_input("Send to Peer No. >"))]
+		peer = peers[int(input("Send to Peer No. >"))]
 		
-		f = open(filename, 'r')
+		f = open(filename, 'rb')
 		started = time.time()
 		peer.send_message(trans, f.read()).subscribe(send_success, send_fail)
 		f.close()

@@ -9,13 +9,13 @@ class Subscription:
 
     def to_dict(self):
         return {
-            "subscriptions": self.applications,
-            "id": self.id
+            b"subscriptions": self.applications,
+            b"id": self.id
         }
 
     @staticmethod
     def from_dict(data):
         s = Subscription()
-        s.applications = data["subscriptions"]
-        s.id = data["id"]
+        s.applications = data[b"subscriptions"]
+        s.id = data[b"id"]
         return s

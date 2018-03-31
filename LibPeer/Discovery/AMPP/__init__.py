@@ -51,14 +51,14 @@ class AMPP(Discoverer):
             return
         
         # This is an AMPP packet
-        if(message[:4] == "AMPP"):
+        if(message[:4] == b"AMPP"):
             # Set the address protocol
             address.protocol = "AMPP"
             
             # Store the peer address
             self.ampp_peers[address.get_hash()] = address
 
-            if(message[4:7] == "SUB"):
+            if(message[4:7] == b"SUB"):
                 # Deserialise Subscribe Request
                 subscription = Subscription.from_dict(umsgpack.unpackb(message[7:]))
 
@@ -74,12 +74,12 @@ class AMPP(Discoverer):
                 address_hash = address.get_hash()
                 
                 # Subscribe to these applications on all upstream peers
-                for peer in self.ampp_peers.itervalues():
+                for peer in self.ampp_peers.values():
                     if(peer.get_hash() != address_hash):
-                        self.send_datagram("SUB" + umsgpack.packb(subscription.to_dict()), peer)
+                        self.send_datagram(b"SUB" + umsgpack.packb(subscription.to_dict()), peer)
 
 
-            elif(message[4:7] == "ADV"):
+            elif(message[4:7] == b"ADV"):
                 # Deserialise Advertise Request
                 advertorial = Advertorial.from_dict(umsgpack.unpackb(message[7:]))
 
@@ -97,11 +97,11 @@ class AMPP(Discoverer):
                 if(advertorial.address.protocol in self.local_subscriptions):
                     self.store_advertorial(advertorial)
 
-            elif(message[4:7] == "ADQ"):
+            elif(message[4:7] == b"ADQ"):
                 # Address request
-                self.send_datagram("ADR" + address.get_binary_address(), address)
+                self.send_datagram(b"ADR" + address.get_binary_address(), address)
 
-            elif(message[4:7] == "ADR"):
+            elif(message[4:7] == b"ADR"):
                 # Got an address
                 reported_address = BAddress.from_serialised(message[7:])
                 log.debug("%s sees us as %s" % (address, reported_address))
@@ -113,8 +113,8 @@ class AMPP(Discoverer):
 
         self.peer_visible_addresses = {}
 
-        for peer in self.ampp_peers.itervalues():
-            self.send_datagram("ADQ", peer)
+        for peer in self.ampp_peers.values():
+            self.send_datagram(b"ADQ", peer)
         
         # Return a result from responses soon
         reactor.callLater(3, self.check_address_query_timeout, deferred)
@@ -126,10 +126,10 @@ class AMPP(Discoverer):
 
     def send_advertorial(self, advertorial, excludePeerHash = None):
         count = 0
-        for subscription in self.subscriptions.itervalues():
+        for subscription in self.subscriptions.values():
             if(advertorial.address.protocol in subscription.applications) and (subscription.address.get_hash() != excludePeerHash):
                 count += 1
-                self.send_datagram("ADV" + umsgpack.packb(advertorial.to_dict()), subscription.address)
+                self.send_datagram(b"ADV" + umsgpack.packb(advertorial.to_dict()), subscription.address)
 
         if(excludePeerHash == None):
             log.debug("Sent advertorial to %i peers" % count)
@@ -137,7 +137,7 @@ class AMPP(Discoverer):
 
     def send_datagram(self, message, address):
         if(address.address_type in self.networks):
-            self.networks[address.address_type].send_datagram("AMPP" + message, address)
+            self.networks[address.address_type].send_datagram(b"AMPP" + message, address)
         else:
             log.error("Failed to send datagram to '%s', no network of that type available" % address)
 
@@ -146,8 +146,8 @@ class AMPP(Discoverer):
         # Send subscription request to all peers with our local subscriptions
         sub = Subscription()
         sub.applications = self.local_subscriptions
-        for peer in self.ampp_peers.itervalues():
-            self.send_datagram("SUB" + umsgpack.packb(sub.to_dict()), peer)
+        for peer in self.ampp_peers.values():
+            self.send_datagram(b"SUB" + umsgpack.packb(sub.to_dict()), peer)
 
 
     def deffered_result(self, length=0.1,  *args):

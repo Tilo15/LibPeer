@@ -3,6 +3,7 @@ import hashlib
 import time
 import uuid
 import zlib
+from LibPeer.Formats.butil import *
 
 CHUNK_SIZE = 4096
 
@@ -10,26 +11,27 @@ class Chunk:
     def __init__(self):
         self.id = uuid.uuid4().bytes
         self.after = None
-        self.data = ""
+        self.data = b""
         self.time_sent = 0
         self.valid = False
 
     def serialise(self):
         # Empty UUID if this is first chunk
-        after = "\x00" * 16
+        after = b"\x00" * 16
         if(self.after != None):
             after = self.after
 
         self.time_sent = time.time()
 
-        chunk = "%s%s%s" % (self.id, after, self.data)
+        chunk = b"%s%s%s" % (self.id, after, sb(self.data))
 
         lite_checksum = zlib.adler32(chunk)
         hasher = hashlib.md5()
         hasher.update(chunk)
         full_checksum = hasher.digest()
 
-        frame = "%s%s%s" % (struct.pack('dl', self.time_sent, lite_checksum), full_checksum, chunk)
+        frame = b"%s%s%s" % (struct.pack('dl', self.time_sent, lite_checksum), full_checksum, chunk)
+
         return frame
 
 
