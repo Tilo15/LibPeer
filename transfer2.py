@@ -39,14 +39,14 @@ def incoming_message(message_object):
 
 		# Get details
 		is_size = False
-		size = ""
-		name = ""
+		size = b""
+		name = b""
 		while True:
-			c = to_process[0]
+			c = to_process[:1]
 			to_process = to_process[1:]
-			if(c == b":"[0]):
+			if(c == b":"):
 				is_size = True
-			elif(c == b"\n"[0]):
+			elif(c == b"\n"):
 				break
 			elif(is_size):
 				size += c
