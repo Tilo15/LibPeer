@@ -1,6 +1,6 @@
 
 from LibPeer.Discovery import LAN
-from LibPeer.Transports import DSTP
+from LibPeer.Transports import EDP
 from LibPeer.Networks import ipv4
 from LibPeer.Logging import log
 import LibPeer.Manager
@@ -19,7 +19,7 @@ m = LibPeer.Manager.Manager("helloworld", discoverer, "cachefile")
 
 # Register a network and transport with the manager
 net = m.add_network(ipv4.IPv4, local=True)
-trans = m.add_transport(DSTP.DSTP)
+trans = m.add_transport(EDP.EDP)
 
 def incoming_message(message_object):
 	print
