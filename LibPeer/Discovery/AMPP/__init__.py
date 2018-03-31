@@ -22,6 +22,8 @@ class AMPP(Discoverer):
         self.bootstrappers = []
         self.bootstrappers_to_test = 0
         self.peer_visible_addresses = {}
+        self.subscription_forwarded_ids = set()
+        self.advertorial_forwarded_ids = set()
 
     def add_network(self, network):
         log.debug("Network of type %s registered" % network.type)
@@ -30,15 +32,15 @@ class AMPP(Discoverer):
 
     def store_advertorial(self, advertorial):
         # If we don't have a dictionary entry for this application yet, create it
-        if(advertorial.application not in self.stored_advertorials):
-            self.stored_advertorials[advertorial.application] = {}
+        if(advertorial.address.protocol not in self.stored_advertorials):
+            self.stored_advertorials[advertorial.address.protocol] = {}
         
         # If we don't have a dictionary entry for this appliction's label, create it
-        if(advertorial.address.label not in self.stored_advertorials[advertorial.application]):
-            self.stored_advertorials[advertorial.address.label] = set()
+        if(advertorial.address.label not in self.stored_advertorials[advertorial.address.protocol]):
+            self.stored_advertorials[advertorial.address.protocol][advertorial.address.label] = set()
 
         # Add to 2d dictionary
-        self.stored_advertorials[advertorial.application][advertorial.address.label].add(advertorial)
+        self.stored_advertorials[advertorial.address.protocol][advertorial.address.label].add(advertorial)
         
 
 
@@ -57,9 +59,17 @@ class AMPP(Discoverer):
             self.ampp_peers[address.get_hash()] = address
 
             if(message[4:7] == "SUB"):
-
                 # Deserialise Subscribe Request
                 subscription = Subscription.from_dict(umsgpack.unpackb(message[7:]))
+
+                # Check to see if we have already received this message before
+                if(subscription.id in self.subscription_forwarded_ids):
+                    log.debug("Ignoring duplicate subscription request")
+                    return
+
+                # Add it if not
+                self.subscription_forwarded_ids.add(subscription.id)
+
                 subscription.address = address
                 self.subscriptions[address.get_hash()] = subscription
                 address_hash = address.get_hash()
@@ -74,11 +84,18 @@ class AMPP(Discoverer):
                 # Deserialise Advertise Request
                 advertorial = Advertorial.from_dict(umsgpack.unpackb(message[7:]))
 
+                # Check to see if we have already received this message before
+                if(advertorial.id in self.advertorial_forwarded_ids):
+                    return
+
+                # Add it if not
+                self.advertorial_forwarded_ids.add(advertorial.id)
+
                 # Forward the message onto any peers who are subscribed to this application type
                 self.send_advertorial(advertorial)
 
                 # If we are listening for this application, store it
-                if(advertorial.application in self.local_subscriptions):
+                if(advertorial.address.protocol in self.local_subscriptions):
                     self.store_advertorial(advertorial)
 
             elif(message[4:7] == "ADQ"):
@@ -105,13 +122,16 @@ class AMPP(Discoverer):
         return deferred
 
     def check_address_query_timeout(self, deferred):
-        deferred.callback(self.peer_visible_addresses.itervalues())
+        deferred.callback(self.peer_visible_addresses.values())
 
 
     def send_advertorial(self, advertorial):
+        count = 0
         for subscription in self.subscriptions.itervalues():
             if(advertorial.address.protocol in subscription.applications):
+                count += 1
                 self.send_datagram("ADV" + umsgpack.packb(advertorial.to_dict()), subscription.address)
+        log.debug("Sent advertorial to %i peers" % count)
 
 
     def send_datagram(self, message, address):
@@ -125,7 +145,7 @@ class AMPP(Discoverer):
         # Send subscription request to all peers with our local subscriptions
         sub = Subscription()
         sub.applications = self.local_subscriptions
-        for peer in self.ampp_peers:
+        for peer in self.ampp_peers.itervalues():
             self.send_datagram("SUB" + umsgpack.packb(sub.to_dict()), peer)
 
 
@@ -147,7 +167,7 @@ class AMPP(Discoverer):
         self.subscribe()
 
         # Notify the caller that this task has completed
-        self._deffered_result(0.1, True)
+        return self.deffered_result(0.1, True)
 
     def get_peers(self, application, label=""):
         peers = []
