@@ -203,7 +203,7 @@ class AMPP(Discoverer):
             bootstrapper.advertise(net).addCallback(self.boostrapper_finished_run, bootstrapper)
 
     def boostrapper_finished_run(self, success, bootstrapper):
-        log.debug("Querying %s bootstrapper for peers" % bootsreapper.network_type)
+        log.debug("Querying %s bootstrapper for peers" % bootstrapper.network_type)
         bootstrapper.get_ampp_peers().addCallback(self.bootstrapper_got_peers, bootstrapper)
 
     def bootstrapper_got_peers(self, peers, bootstrapper):
