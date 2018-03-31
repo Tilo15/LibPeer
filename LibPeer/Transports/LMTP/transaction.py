@@ -223,14 +223,14 @@ class Transaction:
 
         elif(data[:2] == b"\x16\x05"): # SYN ENQ
             # Sender wants to know the current time
-            self.send(self, b"\x05\x16\x06" + struct.pack("Q", time.time()))
+            self.send(self, b"\x05\x16\x06" + struct.pack("d", time.time()))
             log.debug("sent current time to sender")
 
         elif(data[:2] == b"\x16\x06"): # SYN ACK
             # Receiver has sent us their current time
             if(self.time_request_time != 0):
                 # We were waiting for this
-                remote_time = struct.unpack("Q", data[2:])[0]
+                remote_time = struct.unpack("d", data[2:])[0]
                 current_time = time.time()
                 clock_difference = remote_time - self.time_request_time
                 current_time += clock_difference
