@@ -5,6 +5,7 @@ from LibPeer.Transports.LMTP import transaction
 from LibPeer.Logging import log
 from LibPeer.Formats.butil import *
 import uuid
+import binascii
 
 # Large Message Transport Protocol
 # id = \x05
@@ -21,7 +22,7 @@ class LMTP(Transport):
 		self.transactions = {}
 		self.oldTransactions = set()
 
-	def send(self, data, address, channel=b"\x00"*16):
+	def send(self, data, address, channel="\x00"*16):
         # Run modifiers
 		data = self.mod_encode(address, data)
 
@@ -51,10 +52,10 @@ class LMTP(Transport):
 			self.transactions[id].data_received(data)
 		
 		elif(id in self.oldTransactions):
-			log.debug("ignoring parcel for transaction '%s' which has already completed" % ss(id.encode("hex")))
+			log.debug("ignoring parcel for transaction '%s' which has already completed" % b2s(binascii.hexlify(id))
 
 		else:
-			log.debug("got new transaction with id '%s'" % ss(id.encode("hex")))
+			log.debug("got new transaction with id '%s'" % b2s(binascii.hexlify(id))
 			# Create new transaction to service parcel
 			trans = transaction.Transaction(id, _parcel.address, _parcel.channel, self.transaction_send, self.delay_target)
 
@@ -87,4 +88,4 @@ class LMTP(Transport):
 	def transaction_canceled(self, id):
 		self.oldTransactions.add(id)
 		del self.transactions[id]
-		log.info("transaction '%s' canceled" % ss(id.encode("hex")))
+		log.info("transaction '%s' canceled" % b2s(binascii.hexlify(id))
