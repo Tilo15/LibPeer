@@ -9,7 +9,7 @@ import traceback
 import time
 import os
 
-log.settings(True, 1)
+log.settings(True, 0)
 
 # Create the discoverer
 discoverer = AMPP.AMPP(["badftp2"])
@@ -54,7 +54,7 @@ def incoming_message(message_object):
 				name += c
 
 		size = int(size)
-		f = open(name, 'w')
+		f = open(name, 'wb')
 		incoming[peer] = [name, size, 0, f]
 
 	if(len(to_process) > 0 and peer in incoming):
@@ -112,7 +112,7 @@ try:
 
 		peer = peers[int(input("Send to Peer No. >"))]
 		
-		f = open(filename, 'r')
+		f = open(filename, 'rb')
 		started = time.time()
 
 		outgoing[filename] = f

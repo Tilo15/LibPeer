@@ -4,6 +4,7 @@ from LibPeer.Transports import Transport
 from LibPeer.Transports.LMTP import transaction
 from LibPeer.Logging import log
 from LibPeer.Transports.DSTP.connection import Connection
+from LibPeer.Formats.butil import *
 import uuid
 
 # Data Stream Transport Protocol
@@ -20,13 +21,13 @@ class DSTP(Transport):
         self.delay_target = 0.1
         self.channel_connections = {}
 
-    def send(self, data, address, channel="\x00" * 16):
-        connection = self.get_or_create_connection(address, channel)
-        return connection.send_data(data)
+    def send(self, data, address, channel=b"\x00" * 16):
+        connection = self.get_or_create_connection(address, sb(channel))
+        return connection.send_data(sb(data))
 
     def parcel_received(self, _parcel):
         connection = self.get_or_create_connection(_parcel.address, _parcel.channel)
-        connection.process_message(_parcel.message)
+        connection.process_message(sb(_parcel.message))
 
     def get_or_create_connection(self, address, channel):
         hash = address.get_hash()

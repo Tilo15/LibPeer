@@ -15,17 +15,17 @@ class Advertorial:
 
     def to_dict(self):
         return {
-            "address": self.address.get_binary_address(),
-            "ttl": self.hops_left - 1,
-            "expires_in": self.lifespan,
-            "id": self.id
+            b"address": self.address.get_binary_address(),
+            b"ttl": self.hops_left - 1,
+            b"expires_in": self.lifespan,
+            b"id": self.id
         }
     
     @staticmethod
     def from_dict(data):
         obj = Advertorial()
-        obj.address = BAddress.from_serialised(data["address"])
-        obj.hops_left = data["ttl"]
-        obj.lifespan = data["expires_in"]
-        obj.id = data["id"]
+        obj.address = BAddress.from_serialised(data[b"address"])
+        obj.hops_left = data[b"ttl"]
+        obj.lifespan = data[b"expires_in"]
+        obj.id = data[b"id"]
         return obj
