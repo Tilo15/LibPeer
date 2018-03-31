@@ -14,10 +14,8 @@ def ss(o) -> str:
         return b2s(o)
     elif(type(o) is str):
         return o
-    elif(type(o) is int):
-        return int(o)
     else:
-        return str(o)
+        raise TypeError("%s object is not a string or bytes" % type(o))
 
 def sb(o) -> bytes:
     '''Safely convert object to bytes'''
@@ -26,7 +24,7 @@ def sb(o) -> bytes:
     elif(type(o) is bytes):
         return o
     else:
-        return s2b(str(o))
+        raise TypeError("%s object is not a string or bytes" % type(o))
 
 def concats(*args) -> str:
     '''Returns a single string object containing the joined arguments'''
@@ -49,5 +47,16 @@ def st(*args):
     items = ()
     for arg in args:
         items += (ss(arg),)
+
+    return items
+
+def stf(*args):
+    '''Returns a tuple of objects, converting bytes to strings where found, useful for string formatting'''
+    items = ()
+    for arg in args:
+        try:
+            items += (ss(arg),)
+        except:
+            items += (arg,)
 
     return items
