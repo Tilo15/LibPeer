@@ -1,5 +1,5 @@
 from LibPeer.Discovery.AMPP.bootstrapers import Bootstrapper
-from LibPeer.Discovery.AMPP.bootstrapers.DNS.dns_resolver import DNSHelper
+from LibPeer.Discovery.AMPP.bootstrapers.DNS.dns_discoverer import DNSDiscoverer
 from LibPeer.Formats.baddress import BAddress
 from LibPeer.Logging import log
 from twisted.internet import defer, reactor
@@ -8,7 +8,7 @@ class DNS(Bootstrapper):
     def __init__(self):
         self.network_type = "IPv4" # Eg. IPv4
         self.recommended_advertise_interval = 3600
-        self.helper = DNSHelper()
+        self.helper = DNSDiscoverer()
     
     def get_ampp_peers(self):
         deferred = defer.Deferred()
@@ -20,7 +20,6 @@ class DNS(Bootstrapper):
         baddresses = []
         for address in addresses:
             baddresses.append(BAddress("AMPP", address[0], address[1], address_type=self.network_type))
-            print(baddresses[-1])
 
         deferred.callback(baddresses)
 

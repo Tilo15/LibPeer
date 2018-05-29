@@ -9,7 +9,7 @@ import traceback
 import time
 import os
 
-log.settings(True, 1)
+log.settings(True, 0)
 
 # Create the discoverer
 discoverer = AMPP.AMPP(["badftp2"])

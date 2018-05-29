@@ -6,7 +6,7 @@ from LibPeer.Logging import log
 from LibPeer.Formats.butil import ss
 import ipaddress
 
-class DNSHelper:
+class DNSDiscoverer:
     def __init__(self):
         self.resolver = getResolver()
         self.tasks = 0
