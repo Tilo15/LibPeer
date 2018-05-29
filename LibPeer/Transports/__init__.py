@@ -18,10 +18,10 @@ class Transport:
 		self.data_received = Events.Event()
 
 	def send(self, data, address, channel="\x00"*16):
-		raise NotImplemented()
+		raise NotImplementedError
 
 	def parcel_received(self, parcel):
-		raise NotImplemented()
+		raise NotImplementedError
 
 	def pass_along(self, parcel, obj):
 		"""Used internally by subclasses to pass a message onto its destination

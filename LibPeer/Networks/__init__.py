@@ -8,10 +8,10 @@ class Network:
 		self.datagram_received = Event()
 
 	def send_datagram(self, message, address):
-		raise NotImplemented()
+		raise NotImplementedError
 
 	def get_address(self, peer_suggestion):
-		raise NotImplemented()
+		raise NotImplementedError
 
 	def close(self):
-		raise NotImplemented()
+		raise NotImplementedError

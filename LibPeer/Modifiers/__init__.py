@@ -2,7 +2,7 @@
 class Modifier:
     
     def decode(self, data, address):
-        raise NotImplemented()
+        raise NotImplementedError
 
     def encode(self, data, address):
-        raise NotImplemented()
+        raise NotImplementedError

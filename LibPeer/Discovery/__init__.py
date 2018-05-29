@@ -3,16 +3,16 @@ class Discoverer:
         self.recommended_rebroadcast_interval = 40
 
     def start_discoverer(self, cachePath):
-        raise NotImplemented()
+        raise NotImplementedError
 
     def get_address(self):
-        raise NotImplemented()
+        raise NotImplementedError
 
     def advertise(self, peer_address):
-        raise NotImplemented()
+        raise NotImplementedError
 
     def get_peers(self, application, label=""):
-        raise NotImplemented()
+        raise NotImplementedError
 
     def stop_discoverer(self):
-        raise NotImplemented()
+        raise NotImplementedError

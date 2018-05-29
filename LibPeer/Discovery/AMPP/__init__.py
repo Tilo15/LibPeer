@@ -215,7 +215,7 @@ class AMPP(Discoverer):
 
             # Start advertising
             for bs in self.bootstrappers:
-                self.run_bootstrapper_advertise(bs)
+                    self.run_bootstrapper_advertise(bs)
             
             # Finally, pass the all clear to the caller of start_discoverer
             deferred.callback(True)
