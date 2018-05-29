@@ -3,13 +3,15 @@ from LibPeer.Logging import log
 class Event:
 	def __init__(self):
 		self.subscribers = []
+		self.subscriber_args = {}
 
-	def subscribe(self, callback):
+	def subscribe(self, callback, *custom_args):
 		self.subscribers.append(callback)
+		self.subscriber_args[callback] = custom_args
 
 	def call(self, *args):
 		for sub in self.subscribers:
-			sub(*args)
+			sub(*args, *self.subscriber_args[sub])
 
 
 

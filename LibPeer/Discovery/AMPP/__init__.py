@@ -193,7 +193,8 @@ class AMPP(Discoverer):
                 log.debug("Bootstraper test started")
                 self.bootstrappers_to_test += 1
                 bootstrapper.test_availability(self.networks[bootstrapper.network_type]).addCallback(self.boostrapper_available_result, bootstrapper, deferred)
-
+            else:
+                bootstrapper.cancel()
         
         return deferred
 
@@ -205,6 +206,7 @@ class AMPP(Discoverer):
             self.bootstrappers.append(bootstrapper)
         else:
             log.debug("A bootstrapper for network type %s is unavailable" % bootstrapers.network_type)
+            bootstrapper.cancel()
 
         # If we have tested them all, let the starter know that the process is complete
         self.bootstrappers_to_test -= 1

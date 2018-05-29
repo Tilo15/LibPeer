@@ -16,7 +16,12 @@ class Bootstrapper:
         '''Returns a defferred result with a boolean which is set to true if this discoverer is operable under the current network conditions'''
         raise NotImplemented()
 
+    def cancel(self):
+        '''Cancel this bootstrapper, ending any background processes'''
+        raise NotImplemented()
+
 # Easy list of all the bootstrapper classes
 from LibPeer.Discovery.AMPP.bootstrapers.ipv4_multicast import IPv4_Multicast
+from LibPeer.Discovery.AMPP.bootstrapers.ipv4_irc import IPv4_IRC
 
-BOOTSTRAPPERS = [IPv4_Multicast,]
+BOOTSTRAPPERS = [IPv4_Multicast, IPv4_IRC]

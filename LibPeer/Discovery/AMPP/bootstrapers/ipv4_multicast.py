@@ -37,3 +37,7 @@ class IPv4_Multicast(Bootstrapper):
                 log.warn("LAN discoverer returned an invalid IPv4 address")
         
         deferred.callback(True)
+
+    def cancel(self):
+        self.discoverer.stop_discoverer()
+
