@@ -9,7 +9,7 @@ import traceback
 import time
 import os
 
-log.settings(True, 0)
+log.settings(True, 1)
 
 # Create the discoverer
 discoverer = AMPP.AMPP(["badftp2"])
@@ -22,7 +22,7 @@ discoverer = AMPP.AMPP(["badftp2"])
 m = LibPeer.Manager.Manager("badftp2", discoverer, "cachefile")
 
 # Register a network and transport with the manager
-net = m.add_network(ipv4.IPv4, local=True)
+net = m.add_network(ipv4.IPv4, local=False)
 trans = m.add_transport(DSTP.DSTP)
 
 # Also add the network to the AMPP discoverer

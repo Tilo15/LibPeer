@@ -10,12 +10,12 @@ from LibPeer.Formats.baddress import *
 
 
 class IPv4(Networks.Network):
-    def __init__(self, muxer, local=False):
+    def __init__(self, muxer, local=False, startPort=3000):
         self.datagram_received = Event()
         self.udp = UDP_Helper(muxer, self.datagram_received)
         self.muxer = muxer
         self.type = "IPv4"
-        self.port = 3000  # todo
+        self.port = startPort
         self.publicPort = None
         if(local):
             while(not PublicPort.is_local_port_free(self.port)):
