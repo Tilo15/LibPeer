@@ -24,4 +24,4 @@ class Bootstrapper:
 from LibPeer.Discovery.AMPP.bootstrapers.ipv4_multicast import IPv4_Multicast
 from LibPeer.Discovery.AMPP.bootstrapers.DNS import DNS
 
-BOOTSTRAPPERS = [DNS]
+BOOTSTRAPPERS = [IPv4_Multicast, DNS]
