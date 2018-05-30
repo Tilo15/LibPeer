@@ -12,7 +12,8 @@ from twisted.internet import reactor, defer
 
 class AMPP(Discoverer):
     def __init__(self, applications, broadcast_ttl = 30):
-        self.recommended_rebroadcast_interval = (60 * 5)
+        self.recommended_rebroadcast_interval = 10
+        # This later gets changed to every five minutes after the first advertasment is sent
         # Every 5 minutes equates to approximately 41 kbps (with 100 byte packets) if connected to a million advertising peers
 
         self.networks = {}
@@ -148,6 +149,10 @@ class AMPP(Discoverer):
 
         if(excludePeerHash == None) and (advertorial.address.protocol != "AMPP"):
             log.debug("Sent advertorial to %i peers" % count)
+            if(count != 0):
+                # Adjust the recommendation to every five minutes to not cause
+                # network conjestion now that we have advertised to peers
+                self.recommended_rebroadcast_interval = (60 * 5)
 
 
     def send_datagram(self, message, address):

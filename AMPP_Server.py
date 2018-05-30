@@ -20,7 +20,7 @@ if(len(sys.argv) != 2):
 else:
     port = int(sys.argv[1])
     network = IPv4(Muxer(), True, int(port))
-    discoverer = AMPP.AMPP([])
+    discoverer = AMPP.AMPP(["AMPP"]) # Passing "AMPP" in will cause it to expressly subscribe to AMPP adverts
     discoverer.add_network(network)
     discoverer.start_discoverer("").addCallback(running)
     reactor.run(installSignalHandlers=False)
