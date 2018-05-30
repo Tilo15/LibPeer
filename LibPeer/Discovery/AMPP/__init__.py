@@ -6,12 +6,15 @@ from LibPeer.Discovery.AMPP.subscription import Subscription
 from LibPeer.Discovery.AMPP.advertorial import Advertorial
 from LibPeer.Discovery.AMPP.bootstrapers import BOOTSTRAPPERS
 from LibPeer.Discovery import Discoverer
+from LibPeer.Formats.butil import sb
 from LibPeer.Logging import log
 from twisted.internet import reactor, defer
 
 class AMPP(Discoverer):
     def __init__(self, applications, broadcast_ttl = 30):
-        self.recommended_rebroadcast_interval = 10 # TODO change to more reasonable number
+        self.recommended_rebroadcast_interval = (60 * 5)
+        # Every 5 minutes equates to approximately 41 kbps (with 100 byte packets) if connected to a million advertising peers
+
         self.networks = {}
         self.subscriptions = {}
         self.local_subscriptions = applications
@@ -69,6 +72,13 @@ class AMPP(Discoverer):
                 # Add it if not
                 self.subscription_forwarded_ids.add(subscription.id)
 
+                log.debug("%s asked to be subscribed to all messages for applications: %s" % (address, ", ".join(subscription.applications)) )
+
+                # Automatically subscribe the new subscriber to the AMPP messages to help it find
+                # other AMPP peers
+                if("AMPP" not in subscription.applications):
+                    subscription.applications.append("AMPP")
+
                 subscription.address = address
                 self.subscriptions[address.get_hash()] = subscription
                 address_hash = address.get_hash()
@@ -95,7 +105,12 @@ class AMPP(Discoverer):
 
                 # If we are listening for this application, store it
                 if(advertorial.address.protocol in self.local_subscriptions):
+                    log.debug("Got advertorial from AMPP peer %s for address %s with %i hops left" % (address, advertorial.address, advertorial.hops_left))
                     self.store_advertorial(advertorial)
+
+                if(advertorial.address.protocol == "AMPP"):
+                    log.debug("Found additional AMPP peer %s via AMPP" % advertorial.address)
+                    self.ampp_peers[advertorial.address.get_hash()] = advertorial.address
 
             elif(message[4:7] == b"ADQ"):
                 # Address request
@@ -105,7 +120,7 @@ class AMPP(Discoverer):
                 # Got an address
                 reported_address = BAddress.from_serialised(message[7:])
                 log.debug("%s sees us as %s" % (address, reported_address))
-                self.peer_visible_addresses[reported_address.get_hash()] = reported_address.net_address
+                self.peer_visible_addresses[reported_address.get_hash()] = sb(reported_address.net_address)
 
 
     def get_address(self):
@@ -131,7 +146,7 @@ class AMPP(Discoverer):
                 count += 1
                 self.send_datagram(b"ADV" + umsgpack.packb(advertorial.to_dict()), subscription.address)
 
-        if(excludePeerHash == None):
+        if(excludePeerHash == None) and (advertorial.address.protocol != "AMPP"):
             log.debug("Sent advertorial to %i peers" % count)
 
 
@@ -163,6 +178,13 @@ class AMPP(Discoverer):
         advertorial.hops_left = self.broadcast_ttl
         advertorial.lifespan = self.recommended_rebroadcast_interval
         self.send_advertorial(advertorial)
+
+        # Take this opportunity to advertise the AMPP service itself
+        ampp_advertorial = Advertorial()
+        ampp_advertorial.address = BAddress("AMPP", peer_address.net_address, peer_address.port)
+        ampp_advertorial.hops_left = int(self.broadcast_ttl / 2)
+        ampp_advertorial.lifespan = self.recommended_rebroadcast_interval
+        self.send_advertorial(ampp_advertorial)
 
         # Now, make sure our subscriptions haven't expired
         self.subscribe()
@@ -205,7 +227,7 @@ class AMPP(Discoverer):
         if(result):
             self.bootstrappers.append(bootstrapper)
         else:
-            log.debug("A bootstrapper for network type %s is unavailable" % bootstrapers.network_type)
+            log.warn("A bootstrapper for network type %s is unavailable" % bootstrapers.network_type)
             bootstrapper.cancel()
 
         # If we have tested them all, let the starter know that the process is complete

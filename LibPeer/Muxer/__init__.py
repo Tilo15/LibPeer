@@ -23,7 +23,7 @@ class Muxer:
 
     def datagram_received(self, message, address):
         if len(message) < 37:
-            log.debug("received datagram too small from %s, ignoring" % str(address))
+            # Ignore messages smaller than the min length
             return
 
         if message[:3] == b'MXR':
