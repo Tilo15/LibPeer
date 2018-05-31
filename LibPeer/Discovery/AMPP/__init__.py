@@ -9,15 +9,19 @@ from LibPeer.Discovery import Discoverer
 from LibPeer.Formats.butil import sb
 from LibPeer.Logging import log
 from twisted.internet import reactor, defer
+from copy import deepcopy
+import operator
 
 class AMPP(Discoverer):
     def __init__(self, applications, broadcast_ttl = 30):
-        self.recommended_rebroadcast_interval = 10
+        self.recommended_rebroadcast_interval = 5
         # This later gets changed to every five minutes after the first advertasment is sent
         # Every 5 minutes equates to approximately 41 kbps (with 100 byte packets) if connected to a million advertising peers
 
         self.networks = {}
         self.subscriptions = {}
+        self.cached_advertorials = {}
+        self.cache_limit = 100
         self.local_subscriptions = applications
         self.stored_advertorials = {}
         self.ampp_peers = {}
@@ -28,6 +32,7 @@ class AMPP(Discoverer):
         self.peer_visible_addresses = {}
         self.subscription_forwarded_ids = set()
         self.advertorial_forwarded_ids = set()
+        self.subscription_peers = set()
 
     def add_network(self, network):
         log.debug("Network of type %s registered" % network.type)
@@ -90,6 +95,20 @@ class AMPP(Discoverer):
                         self.send_datagram(b"SUB" + umsgpack.packb(subscription.to_dict()), peer)
 
 
+                if(not subscription.renewing):
+                    # This is a new subscribe request, send any relevent cached peers
+                    count = 0
+                    for adv in self.cached_advertorials.values():
+                        if(adv.address.protocol in subscription.applications):
+                            # If this is an advertisment for a relevent application
+                            # send it to the subscribing peer
+                            self.send_datagram(b"ADV" + umsgpack.packb(adv.to_dict()), address)
+                            count += 1
+                    
+                    log.debug("Sent %i relevent cached messages to subscribing peer" % count)
+
+
+
             elif(message[4:7] == b"ADV"):
                 # Deserialise Advertise Request
                 advertorial = Advertorial.from_dict(umsgpack.unpackb(message[7:]))
@@ -100,6 +119,9 @@ class AMPP(Discoverer):
 
                 # Add it if not
                 self.advertorial_forwarded_ids.add(advertorial.id)
+
+                # Add message to cache
+                self.add_to_cache(advertorial)
 
                 # Forward the message onto any peers who are subscribed to this application type
                 self.send_advertorial(advertorial, address.get_hash())
@@ -161,12 +183,36 @@ class AMPP(Discoverer):
         else:
             log.error("Failed to send datagram to '%s', no network of that type available" % address)
 
+    def add_to_cache(self, advertorial):
+        self.cached_advertorials[advertorial.id] = advertorial
+        self.clean_cache()
+
+    def clean_cache(self):
+        # Clean out old messages
+        cadvs = deepcopy(self.cached_advertorials)
+        for adv in cadvs.values():
+            if(not adv.is_current()):
+                del self.cached_advertorials[adv.id]
+        
+        if(self.cache_limit < len(self.cached_advertorials)):
+            timeOrdered = sorted(self.cached_advertorials.values(), key=operator.attrgetter('time_received'))
+            # We are still over the cache limit, delete some old entries even
+            # though they haven't expired yet
+            for i in range(len(self.cached_advertorials) - self.cache_limit):
+                del self.cached_advertorials[timeOrdered[i].id]
 
     def subscribe(self):
         # Send subscription request to all peers with our local subscriptions
         sub = Subscription()
         sub.applications = self.local_subscriptions
         for peer in self.ampp_peers.values():
+            # If this is the first time we've sent a subscribe message
+            # to this peer, set renewing to false to get cached peers
+            if(peer.get_hash() not in self.subscription_peers):
+                self.subscription_peers.add(peer.get_hash())
+                sub.renewing = False
+            else:
+                sub.renewing = True
             self.send_datagram(b"SUB" + umsgpack.packb(sub.to_dict()), peer)
 
 
@@ -192,22 +238,43 @@ class AMPP(Discoverer):
         self.send_advertorial(ampp_advertorial)
 
         # Now, make sure our subscriptions haven't expired
+        
         self.subscribe()
 
         # Notify the caller that this task has completed
         return self.deffered_result(0.1, True)
 
     def get_peers(self, application, label=""):
+        # Before getting the advertorials, clean the pool
+        self.clean_stored_advertorials()
+
         peers = []
         if(application in self.stored_advertorials):
             if(label in self.stored_advertorials[application]):
                 for advertorial in self.stored_advertorials[application][label]:
                     if(advertorial.is_current()):
                         peers.append(advertorial.address)
-                        # TODO fix memeory leak where expired advertorials don't get deleted
 
 
         return self.deffered_result(0.1, peers)
+
+    def clean_stored_advertorials(self):
+        apps = self.stored_advertorials
+        to_delete = set()
+        for app in apps.keys():
+            for label in apps[app].keys():
+                for adv in apps[app][label]:
+                    if(not adv.is_current()):
+                        to_delete.add((app, label, adv))
+
+        log.debug("Deleting %i expired advertorials" % len(to_delete))
+        for item in to_delete:
+            try:
+                self.stored_advertorials[item[0]][item[1]].remove(item[2])
+            except:
+                log.error("Unable to remove stored advertorial")
+
+        
 
 
     def start_discoverer(self, cachePath):
