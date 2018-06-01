@@ -17,7 +17,7 @@ class Transport:
 		self.muxer.add_transport(self)
 		self.data_received = Events.Event()
 
-	def send(self, data, address, channel="\x00"*16):
+	def send(self, data, address, channel=b'\x00'*16):
 		raise NotImplementedError
 
 	def parcel_received(self, parcel):

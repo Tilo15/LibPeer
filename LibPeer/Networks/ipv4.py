@@ -25,7 +25,7 @@ class IPv4(Networks.Network):
             self.publicPort = PublicPort()
             self.port = self.publicPort.port
             if(not self.publicPort.open):
-                log.critical("network port is not forwarded to the internet")
+                log.warn("Network port could not be forwarded to the internet via UPnP")
 
         self.muxer.add_network(self)
         reactor.listenUDP(self.port, self.udp, "")

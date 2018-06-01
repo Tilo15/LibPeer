@@ -6,6 +6,7 @@ class Discoverer:
         raise NotImplementedError
 
     def get_address(self):
+        '''Returns a tuple, containing the network address and network identifier'''
         raise NotImplementedError
 
     def advertise(self, peer_address):

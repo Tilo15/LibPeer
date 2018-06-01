@@ -37,6 +37,7 @@ class Chunk:
 
     @staticmethod
     def from_string(frame):
+        frame = sb(frame)
         chunk = Chunk()
         # Timestamp and lite checksum
         chunk.time_sent, lite_checksum = struct.unpack('dl', frame[:16])

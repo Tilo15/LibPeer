@@ -9,7 +9,7 @@ from LibPeer.Transports import ping
 from LibPeer.Manager import peer
 from LibPeer.Manager import message
 from LibPeer.Formats import baddress
-from LibPeer.Formats.butil import ss
+from LibPeer.Formats.butil import ss, stf
 
 import threading
 import sys
@@ -66,17 +66,17 @@ class Manager:
 		log.info("Discoverer is now running")
 
 
-	def ping(self, address):
+	def ping(self, address, message="Default Ping Message"):
 		"""Ping an address"""
-		return self.transports[Transports.TRANSPORT_PING].send("Manager Ping", address)
+		return self.transports[Transports.TRANSPORT_PING].send(message, address)
 
 
 	def callback(self, transId, address, channel, data):
-		if(transId == Transports.TRANSPORT_PING and data.data == "Manager Ping"):
-			# Don't pass along manager created pings
+		if(transId == Transports.TRANSPORT_PING):
+			# Print out the pingback information
 			log.info("got PONG from %s in %ims" % (str(address), data.time))
 
-		elif(address.get_hash() not in self.advertised_address_hashes):
+		if(address.get_hash() not in self.advertised_address_hashes):
 			# Is this a new peer?
 			if(address.get_hash() not in self.peer_hashmap):
 				# Yes, add it to our list!
@@ -115,20 +115,20 @@ class Manager:
 
 	def broadcast_address(self, addresses):
 		log.debug("We appear as the following addresses to our peers:")
-		log.debug("    " +  ss(b', '.join(addresses)))
 		for address_suggestion in addresses:
-			for network in self.muxer.networks.values():
-				net_address = network.get_address(address_suggestion)
-				if(type(net_address) is tuple):
-					peer_address = baddress.BAddress(self.application, net_address[0], net_address[1], address_type=network.type)
+			log.debug("    %s through %s" % stf(address_suggestion[0], address_suggestion[1]))
+			network = self.muxer.networks[address_suggestion[1]]
+			net_address = network.get_address(address_suggestion[0])
+			if(type(net_address) is tuple):
+				peer_address = baddress.BAddress(self.application, net_address[0], net_address[1], address_type=network.type)
+				self.discoverer.advertise(peer_address).addCallback(self.advertised)
+				self.advertised_address_hashes.add(peer_address.get_hash())
+				for label in self.labels:
+					peer_address = baddress.BAddress(self.application, net_address[0], net_address[1], label, network.type)
 					self.discoverer.advertise(peer_address).addCallback(self.advertised)
 					self.advertised_address_hashes.add(peer_address.get_hash())
-					for label in self.labels:
-						peer_address = baddress.BAddress(self.application, net_address[0], net_address[1], label, network.type)
-						self.discoverer.advertise(peer_address).addCallback(self.advertised)
-						self.advertised_address_hashes.add(peer_address.get_hash())
-				else:
-					log.debug("Address suggestion '%s' rejected by %s network controller" % (address_suggestion, network.type))
+			else:
+				log.debug("Address suggestion '%s' rejected by %s network controller" % (ss(address_suggestion[0]), network.type))
 
 
 	def advertised(self, res):
@@ -138,24 +138,28 @@ class Manager:
 	def discovered_peers(self, peers):
 		for address in peers:
 			key = address.get_hash()
-			# Do we have this peer?
-			if(key in self.peer_hashmap):
-				# If the label has not been associated with this peer, add it
-				if(address.label != "" and address.label not in self.peer_hashmap[key].labels):
-					self.peer_hashmap[key].labels.append(address.label)
+			# Don't add ourselves
+			if(key not in self.advertised_address_hashes):
+				# Do we have this peer?
+				if(key in self.peer_hashmap):
+					# If the label has not been associated with this peer, add it
+					if(address.label != "" and address.label not in self.peer_hashmap[key].labels):
+						self.peer_hashmap[key].labels.append(address.label)
 
-				# Touch the peer
-				self.peer_hashmap[key].touch()
-				
+					# Touch the peer
+					self.peer_hashmap[key].touch()
+					
+				else:
+					# Create the peer object
+					p = peer.Peer(self, address)
+					# If we were given a label, add that too
+					if(address.label != ""):
+						p.labels.append(address.label)
+
+					# Save the peer
+					self.peer_hashmap[address.get_hash()] = p
 			else:
-				# Create the peer object
-				p = peer.Peer(self, address)
-				# If we were given a label, add that too
-				if(address.label != ""):
-					p.labels.append(address.label)
-
-				# Save the peer
-				self.peer_hashmap[address.get_hash()] = p
+				log.meltdown(str(address))
 					
 		
 

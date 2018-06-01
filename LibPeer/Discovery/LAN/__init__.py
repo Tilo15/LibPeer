@@ -28,7 +28,7 @@ class LAN(Discoverer):
             if(AF_INET in addresses):
                 for link in addresses[AF_INET]:
                     if(link['addr'] != '127.0.0.1'):
-                        ip_list.append(link['addr'].encode('ascii','ignore'))
+                        ip_list.append((link['addr'].encode('ascii','ignore'), "IPv4"))
         return ip_list
 
     def advertise(self, peer_address):

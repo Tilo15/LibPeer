@@ -18,7 +18,7 @@ class Ping(Transport):
 		self.data_received = Events.Event()
 		self.ping_receipts = {}
 
-	def send(self, data, address, channel="\x00"*16):
+	def send(self, data, address, channel=b'\x00'*16):
 		rec = Events.Receipt()
 		pid = uuid.uuid4()
 		self.ping_receipts[pid.bytes] = rec

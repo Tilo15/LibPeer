@@ -30,7 +30,7 @@ class IPv4_Multicast(Bootstrapper):
 
     def got_address(self, addresses, deferred, network):
         for address in addresses:
-            result = network.get_address(address)
+            result = network.get_address(address[0])
             if(type(result) is tuple):
                 self.discoverer.advertise(BAddress("AMPP", result[0], result[1], address_type=network.type))
             else:

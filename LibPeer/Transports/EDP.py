@@ -14,7 +14,7 @@ class EDP(Transport):
 		self.muxer.add_transport(self)
 		self.data_received = Events.Event()
 
-	def send(self, data, address, channel=b"\x00"*16):
+	def send(self, data, address, channel=b'\x00'*16):
 		data = self.mod_encode(address, data)
 		_parcel = parcel.Parcel(channel, self.id, data, address)
 		self.muxer.send_parcel(_parcel)

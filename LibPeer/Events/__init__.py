@@ -50,7 +50,7 @@ class Receipt:
 	def failure(self, message=""):
 		self.error = True
 		self.complete = True
-		if(self.on_failure != None):
+		if(callable(self.on_failure)):
 			self.on_failure(message, *self.args)
 		else:
 			log.error("an error occurred with message '%s', but the Receipt has no failure callback" % message)

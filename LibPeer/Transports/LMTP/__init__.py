@@ -22,7 +22,7 @@ class LMTP(Transport):
 		self.transactions = {}
 		self.oldTransactions = set()
 
-	def send(self, data, address, channel="\x00"*16):
+	def send(self, data, address, channel=b'\x00'*16):
         # Run modifiers
 		data = self.mod_encode(address, data)
 
