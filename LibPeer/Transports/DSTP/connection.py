@@ -17,6 +17,7 @@ class Connection:
     PING_MAX_RETRIES = 10
 
     def __init__(self, address, channel, send_func):
+        log.debug("new connection with %s instanciated" % address)
         self.address = address
         self.channel = channel
         self.metric = Metric(address)
@@ -139,10 +140,10 @@ class Connection:
 
     def send_chunk(self, chunk):
         self.in_flight[chunk.id] = chunk
-        try:
-            self.send_message(Connection.MESSAGE_CHUNK, chunk.serialise())
-        except:
-            log.warn("Packet dropped")
+        #try:
+        self.send_message(Connection.MESSAGE_CHUNK, chunk.serialise())
+        #except:
+        #log.warn("Packet dropped")
 
     def assembleable(self, chunk):
         while True:

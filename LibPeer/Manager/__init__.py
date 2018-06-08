@@ -158,8 +158,6 @@ class Manager:
 
 					# Save the peer
 					self.peer_hashmap[address.get_hash()] = p
-			else:
-				log.meltdown(str(address))
 					
 		
 

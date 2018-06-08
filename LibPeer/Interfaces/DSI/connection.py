@@ -28,9 +28,10 @@ class Connection:
                 self._prepare_next_chunk(timeout)
 
             # Read more bytes from our current chunk
-            result += self._bytes[self._position:to_read]
-            self._position += to_read
-            self.to_read -= len(result)
+            read = self._bytes[self._position:self._position + to_read]
+            result += read
+            self._position += len(read)
+            to_read -= len(result)
 
         return result
 

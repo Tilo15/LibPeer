@@ -165,16 +165,22 @@ class AMPP(Discoverer):
     def send_advertorial(self, advertorial, excludePeerHash = None):
         count = 0
         for subscription in self.subscriptions.values():
+            
             if(advertorial.address.protocol in subscription.applications) and (subscription.address.get_hash() != excludePeerHash):
                 count += 1
                 self.send_datagram(b"ADV" + umsgpack.packb(advertorial.to_dict()), subscription.address)
 
         if(excludePeerHash == None) and (advertorial.address.protocol != "AMPP"):
             log.debug("Sent advertorial to %i peers" % count)
-            if(count != 0):
+            if(count > 1):
                 # Adjust the recommendation to every five minutes to not cause
                 # network conjestion now that we have advertised to peers
-                self.recommended_rebroadcast_interval = (60 * 5)
+                new_interval = (60 * 5)
+                if(advertorial.address.protocol != "AMPP" and self.recommended_rebroadcast_interval != new_interval):
+                    self.recommended_rebroadcast_interval = new_interval
+                    # Now advertise with the new interval
+                    self.advertise(advertorial.address)
+
 
 
     def send_datagram(self, message, address):

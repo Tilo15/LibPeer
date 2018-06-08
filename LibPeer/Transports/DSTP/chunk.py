@@ -30,7 +30,7 @@ class Chunk:
         hasher.update(chunk)
         full_checksum = hasher.digest()
 
-        frame = b"%s%s%s" % (struct.pack('!dl', self.time_sent, lite_checksum), full_checksum, chunk)
+        frame = b"%s%s%s" % (struct.pack('!dL', self.time_sent, lite_checksum), full_checksum, chunk)
 
         return frame
 
@@ -40,13 +40,13 @@ class Chunk:
         frame = sb(frame)
         chunk = Chunk()
         # Timestamp and lite checksum
-        chunk.time_sent, lite_checksum = struct.unpack('!dl', frame[:16])
+        chunk.time_sent, lite_checksum = struct.unpack('!dL', frame[:12])
 
         # Full checksum
-        full_checksum = frame[16:32]
+        full_checksum = frame[12:28]
 
         # Data (the actual chunk part)
-        data = frame[32:]
+        data = frame[28:]
 
         # Verify chunk data
         chunk.valid = lite_checksum == zlib.adler32(data)

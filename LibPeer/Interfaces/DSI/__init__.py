@@ -5,7 +5,7 @@ from LibPeer.Interfaces import Interface
 from LibPeer import Transports
 from LibPeer.Manager.message import Message
 from LibPeer.Interfaces.DSI.connection import Connection
-from LibPeer.Formats.butil import sb
+from LibPeer.Formats.butil import sb, ss
 from LibPeer.Events import Event
 
 class DSI(Interface):
@@ -28,7 +28,8 @@ class DSI(Interface):
 
     def connect(self, peer):
         if(peer in self.connections):
-            log.error("Already connected to peer %s" % peer)
+            log.warn("Already connected to peer %s" % peer)
+            return self.connections[peer]
         else:
             return Connection(peer, self)
 

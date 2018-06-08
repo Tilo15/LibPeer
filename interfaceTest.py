@@ -3,17 +3,16 @@ from LibPeer.Discovery.AMPP import AMPP
 from LibPeer.Manager import Manager
 from LibPeer.Networks.ipv4 import IPv4
 from LibPeer.Transports.DSTP import DSTP
-from LibPeer.Transports.EDP import EDP
 from LibPeer.Interfaces.DSI import DSI
 from LibPeer.Interfaces.DSI.connection import Connection
 
 
-log.settings(True, 0)
+log.settings(True, 1)
 
 discoverer = AMPP(["ifaceTest"])
 manager = Manager("ifaceTest", discoverer, "test")
 network = manager.add_network(IPv4, local=True)
-transpo = manager.add_transport(EDP)
+transpo = manager.add_transport(DSTP)
 discoverer.add_network(network)
 
 interface = DSI()
@@ -38,6 +37,8 @@ def new_connection(connection: Connection):
 def listen_to_peer(connection: Connection):
     while True:
         print("%s: %s" %  (connection.peer.address, connection.read(10)))
+
+interface.new_connection.subscribe(new_connection)
 
 while True:
     line = sys.stdin.readline()

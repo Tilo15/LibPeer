@@ -20,8 +20,8 @@ class Chunk:
     @staticmethod
     def new_from_string(chunk):
         obj = Chunk()
-        obj.sequence_number, obj.timestamp, obj.checksum = struct.unpack("!Ldl", chunk[:24])
-        obj.data = chunk[24:]
+        obj.sequence_number, obj.timestamp, obj.checksum = struct.unpack("!Ldl", chunk[:16])
+        obj.data = chunk[16:]
         obj.valid = binascii.crc32(obj.data) == obj.checksum
         return obj
 
