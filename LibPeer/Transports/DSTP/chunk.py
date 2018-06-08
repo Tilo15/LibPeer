@@ -30,7 +30,7 @@ class Chunk:
         hasher.update(chunk)
         full_checksum = hasher.digest()
 
-        frame = b"%s%s%s" % (struct.pack('dl', self.time_sent, lite_checksum), full_checksum, chunk)
+        frame = b"%s%s%s" % (struct.pack('!dl', self.time_sent, lite_checksum), full_checksum, chunk)
 
         return frame
 
@@ -40,7 +40,7 @@ class Chunk:
         frame = sb(frame)
         chunk = Chunk()
         # Timestamp and lite checksum
-        chunk.time_sent, lite_checksum = struct.unpack('dl', frame[:16])
+        chunk.time_sent, lite_checksum = struct.unpack('!dl', frame[:16])
 
         # Full checksum
         full_checksum = frame[16:32]

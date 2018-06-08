@@ -107,7 +107,7 @@ class Connection:
         elif(ident == Connection.MESSAGE_CHUNK_ACKNOWLEDGE):
             if(data[1:17] in self.in_flight):
                 del self.in_flight[data[1:17]]
-                self.metric.packet_acknowledged(struct.unpack('d', data[17:])[0])
+                self.metric.packet_acknowledged(struct.unpack('!d', data[17:])[0])
                 # End of a message!
                 if(data[1:17] in self.receipts):
                     self.receipts[data[1:17]].success()
@@ -122,7 +122,7 @@ class Connection:
         # Create the chunk object
         chunk = Chunk.from_string(data)
         if(chunk.valid):
-            self.send_message(Connection.MESSAGE_CHUNK_ACKNOWLEDGE, chunk.id + struct.pack('d', chunk.time_sent))
+            self.send_message(Connection.MESSAGE_CHUNK_ACKNOWLEDGE, chunk.id + struct.pack('!d', chunk.time_sent))
 
             if(chunk.id in self.forgotten) or (chunk.id in self.received):
                 log.debug("Duplicate chunk")

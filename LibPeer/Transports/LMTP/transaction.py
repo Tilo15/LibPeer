@@ -80,7 +80,7 @@ class Transaction:
         # Is it valid?
         if(_chunk.valid):
             # Acknowledge the chunk, and return it's timestamp
-            message = b"\x06" + struct.pack("dL", _chunk.timestamp, _chunk.sequence_number)
+            message = b"\x06" + struct.pack("!dL", _chunk.timestamp, _chunk.sequence_number)
             self.send(self, message)
             # Add the chunk to our dict
             self.chunks[_chunk.sequence_number] = _chunk
@@ -96,7 +96,7 @@ class Transaction:
         task.deferLater(reactor, Transaction.LATENCY_CHECK_INTERVAL, self.measure_latency)
 
     def chunk_acknowledged(self, data):
-        timestamp, sequence_number = struct.unpack("dL", data)
+        timestamp, sequence_number = struct.unpack("!dL", data)
         if(sequence_number in self.chunks_in_flight):
             # The chunk has landed!
             self.acknowledgements += 1
@@ -165,7 +165,7 @@ class Transaction:
 
     def connect(self):
         # Connect request with size of data
-        message = b"\x05\x01" + struct.pack('Q', self.size)
+        message = b"\x05\x01" + struct.pack('!Q', self.size)
         self.send(self, message)
         # Call the timeout checker
         task.deferLater(reactor, Transaction.TIMEOUT_CONNECTION, self.connection_timeout)
@@ -207,7 +207,7 @@ class Transaction:
 
         elif(data[:1] == b"\x01"): # SOH
             # Sender is ready to send
-            self.size = struct.unpack("Q", data[1:])
+            self.size = struct.unpack("!Q", data[1:])
             self.connected = True
             self.did_connect = True
             self.receiving = True
@@ -224,14 +224,14 @@ class Transaction:
 
         elif(data[:2] == b"\x16\x05"): # SYN ENQ
             # Sender wants to know the current time
-            self.send(self, b"\x05\x16\x06" + struct.pack("d", time.time()))
+            self.send(self, b"\x05\x16\x06" + struct.pack("!d", time.time()))
             log.debug("sent current time to sender")
 
         elif(data[:2] == b"\x16\x06"): # SYN ACK
             # Receiver has sent us their current time
             if(self.time_request_time != 0):
                 # We were waiting for this
-                remote_time = struct.unpack("d", data[2:])[0]
+                remote_time = struct.unpack("!d", data[2:])[0]
                 current_time = time.time()
                 clock_difference = remote_time - self.time_request_time
                 current_time += clock_difference

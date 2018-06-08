@@ -20,14 +20,14 @@ class Chunk:
     @staticmethod
     def new_from_string(chunk):
         obj = Chunk()
-        obj.sequence_number, obj.timestamp, obj.checksum = struct.unpack("Ldl", chunk[:24])
+        obj.sequence_number, obj.timestamp, obj.checksum = struct.unpack("!Ldl", chunk[:24])
         obj.data = chunk[24:]
         obj.valid = binascii.crc32(obj.data) == obj.checksum
         return obj
 
     def serialise(self):
         self.timestamp = time.time()
-        chunk = struct.pack("Ldl", self.sequence_number, self.timestamp, self.checksum)
+        chunk = struct.pack("!Ldl", self.sequence_number, self.timestamp, self.checksum)
         chunk += self.data
         return chunk
 
