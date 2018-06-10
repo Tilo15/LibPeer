@@ -10,7 +10,7 @@ from LibPeer.Formats.baddress import *
 
 
 class IPv4(Networks.Network):
-    def __init__(self, muxer, local=False, startPort=3000):
+    def __init__(self, muxer, local=False, startPort=3000, address=""):
         self.datagram_received = Event()
         self.udp = UDP_Helper(muxer, self.datagram_received)
         self.muxer = muxer
@@ -28,7 +28,7 @@ class IPv4(Networks.Network):
                 log.warn("Network port could not be forwarded to the internet via UPnP")
 
         self.muxer.add_network(self)
-        reactor.listenUDP(self.port, self.udp, "")
+        reactor.listenUDP(self.port, self.udp, address)
 
     def send_datagram(self, message, address):
         self.udp.sendDatagram(message, address)
