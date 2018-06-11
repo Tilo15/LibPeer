@@ -36,7 +36,8 @@ class Manager:
 	def add_network(self, networkClass, **kwargs):
 		"""Add a network type to the manager,
 		returns the newly created Network object"""
-		net = networkClass(self.muxer, **kwargs)
+		net = networkClass(**kwargs)
+		self.muxer.add_network(net)
 		return net
 
 

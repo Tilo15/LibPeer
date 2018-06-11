@@ -16,6 +16,7 @@ PRAN_RATE_LIMITED = 101
 #       human readable warning message.
 PRAN_WARNING_MESSAGE = 102
 
+
 # 2xx - Client Errors
 
 # 200 - Bad Address,
@@ -38,3 +39,17 @@ PRAN_INTERNAL_ERROR = 300
 #       The router could not forward the datagram because the destination
 #       network was unavailable.
 PRAN_NETWORK_UNAVAILABLE = 301
+
+
+# 4xx - Refusals
+
+# 400 - Origin Blocked,
+#       The router refused to route the datagram because the sender has been
+#       blacklisted.
+PRAN_ORIGIN_BLOCKED = 400
+
+# 401 - Payload Refused,
+#       The router refused to route the datagram because of the contents of
+#       the datagram.
+PRAN_PAYLOAD_REFUSED = 401
+
