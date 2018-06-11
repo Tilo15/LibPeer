@@ -1,7 +1,9 @@
 
 class Network:
-	def __init__(self):
+	def __init__(self, muxer):
+		self.muxer = muxer
 		self.type = "ProtoType"
+		self.muxer.add_network(self)
 		self.datagram_received = Event()
 
 	def send_datagram(self, message, address):

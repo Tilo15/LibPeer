@@ -19,6 +19,8 @@ class NARP(Network):
         for network in self.muxer.networks.items():
             network.datagram_received.subscribe(self.network_received_data, network)
 
+        self.muxer.add_network(self)
+
         
     def network_received_data(self, datagram: bytes, address: BAddress, network: Network):
         # New datagram from underlying network
@@ -60,7 +62,6 @@ class NARP(Network):
 
             else:
                 # Send the datagram up the chain
-                self.muxer.datagram_received(encap_datagram, narp_address)
                 self.datagram_received.call(encap_datagram, narp_address)
 
         # Router reply message
