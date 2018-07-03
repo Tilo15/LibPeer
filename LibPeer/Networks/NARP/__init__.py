@@ -16,7 +16,7 @@ class NARP(Network):
         self.muxer: Muxer = muxer
         self.type = "NARP"
         
-        for network in self.muxer.networks.items():
+        for network in self.muxer.networks.values():
             network.datagram_received.subscribe(self.network_received_data, network)
 
         self.muxer.add_network(self)

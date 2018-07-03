@@ -6,10 +6,11 @@ class AddressUtil:
     @staticmethod
     def add_outer_hop(hop_address: BAddress, narp_address: BAddress, label = ""):
         return BAddress(
-            "NARP",
+            narp_address.protocol,
             base64.b64encode(hop_address.get_binary_address()),
             base64.b64encode(narp_address.get_binary_address()),
-            label
+            label,
+            "NARP"
         )
 
     @staticmethod

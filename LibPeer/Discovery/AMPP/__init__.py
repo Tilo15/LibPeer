@@ -92,7 +92,7 @@ class AMPP(Discoverer):
                 # Subscribe to these applications on all upstream peers
                 for peer in self.ampp_peers.values():
                     if(peer.get_hash() != address_hash):
-                        self.send_datagram(b"SUB" + umsgpack.packb(subscription.to_dict()), peer)
+                        self.send_subsrciption(subscription, peer)
 
 
                 if(not subscription.renewing):
@@ -182,6 +182,10 @@ class AMPP(Discoverer):
                     self.advertise(advertorial.address)
 
 
+    def send_subsrciption(self, sub, peer):
+        self.send_datagram(b"SUB" + umsgpack.packb(sub.to_dict()), peer)
+
+
 
     def send_datagram(self, message, address):
         if(address.address_type in self.networks):
@@ -219,7 +223,8 @@ class AMPP(Discoverer):
                 sub.renewing = False
             else:
                 sub.renewing = True
-            self.send_datagram(b"SUB" + umsgpack.packb(sub.to_dict()), peer)
+            # Send the subscription
+            self.send_subsrciption(sub, peer)
 
 
     def deffered_result(self, length=0.1,  *args):
