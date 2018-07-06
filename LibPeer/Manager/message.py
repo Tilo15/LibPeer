@@ -1,8 +1,10 @@
 from LibPeer.Formats import baddress
+from LibPeer.Manager.peer import Peer
+from LibPeer.Transports import Transport
 import time
 
 class Message:
-	def __init__(self, transport, peer, channel, data):
+	def __init__(self, transport: Transport, peer: Peer, channel: bytes, data: bytes):
 		self.transport = transport
 		self.peer = peer
 		self.channel = channel

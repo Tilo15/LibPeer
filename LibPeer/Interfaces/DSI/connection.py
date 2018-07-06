@@ -60,7 +60,8 @@ class Connection:
             raise ConnectionError("Connection is not yet open or has been closed")
 
         elif(len(data) > 18446744073709551615):
-            raise OverflowError("Cannot send a message larger than 18446744073709551615 bytes")
+            # Yes I am aware that this will never happen
+            raise OverflowError("Cannot send a message larger than 18,446,744,073,709,551,615 bytes - very well done for getting to this point though!")
 
         else:
             frame = b"DSIS"

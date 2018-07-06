@@ -2,7 +2,7 @@ from LibPeer.Formats import baddress
 import time
 
 class Peer:
-	def __init__(self, manager, address):
+	def __init__(self, manager, address: baddress.BAddress):
 		self.last_interaction = 0
 		self.manager = manager
 		self.address = address
