@@ -1,7 +1,9 @@
 from LibPeer.Events import Receipt
+from LibPeer.Events import Event
 from threading import Condition
-from twisted.internet import reactor
 from LibPeer.Logging import log
+from twisted.internet import reactor
+import time
 
 
 class ReceiptAwaiter:
@@ -40,4 +42,25 @@ class ReceiptAwaiter:
                 self.error = True
                 self.condition.notify()
             
+class EventAwaiter:
+    def __init__(self, event: Event, timeout=None):
+        self.condition: Condition = Condition()
+        self.result = None
+        self.event = event
+
+        self.event.subscribe(self.on_call)
+
+        with self.condition:
+            self.condition.wait(timeout)
+
+        if(self.result == None):
+            raise TimeoutError
+
+
+    def on_call(self, *args):
+        with self.condition:
+            self.result = args
+            self.condition.notify()
+        
+
     

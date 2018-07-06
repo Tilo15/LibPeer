@@ -16,6 +16,7 @@ class Reply:
         self.data_ready = Event()
         self.complete = False
         self.token = token
+        self.data_received = 0
 
         self._received_object_bytes = b""
         self._remaining = object_size
@@ -61,10 +62,14 @@ class Reply:
             bindata = data[:self._remaining]
 
             # Keep log of remaining data
-            self._remaining = self.data_size - len(bindata)
+            self._remaining -= len(bindata)
+
 
             # Add to the fifo
             self._fifo.put(bindata)
+
+            # Keep log of how much data we have received
+            self.data_received += len(bindata)
 
             if(self._remaining == 0):
                 # End of data

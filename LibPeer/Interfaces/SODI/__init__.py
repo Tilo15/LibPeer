@@ -29,10 +29,8 @@ class SODI(Interface):
 
             if(solicitation.reply != None):
                 # We already have a reply going for this one
-                reply: Reply = self.replies[solicitation.token]
-
                 # Pass the message to the reply
-                reply._chunk_received(message.data)
+                solicitation.reply._chunk_received(message.data)
 
             else:
                 # Since the solicitation is valid but there is no reply object
@@ -48,7 +46,7 @@ class SODI(Interface):
                     solicitation.reply = Reply(message.peer, object_size, solicitation.token)
 
                     # Subscribe to the final step of receiving the reply
-                    solicitation.reply.object_ready.subscribe(self._reply_finished, solicitation)
+                    solicitation.reply.data_ready.subscribe(self._reply_finished, solicitation)
 
                     # Notify the application that we got a response
                     solicitation.response.call(solicitation)
@@ -62,9 +60,11 @@ class SODI(Interface):
         else:
             # We aren't expecting a reply from this peer, so it must be a solicitation, get it's size
             sol_size = struct.unpack("!H", message.data[:2])[0]
+            print(message.data)
 
             # Deserialise
             solicitation = Solicitation.from_dict(unpackb(message.data[2:sol_size + 2]))
+
 
             # Create the query object for the application to handle
             query = Query(solicitation, self, message.peer)
@@ -88,12 +88,13 @@ class SODI(Interface):
 
         # Frame the solicitation
         frame = struct.pack("!H", len(sol_data))
+        frame += sol_data
 
         # Save the solicitation against the address
         self.solicitations[solicitation.peer.address.get_hash()] = solicitation
 
         # Send the frame
-        self._send_data(frame, solicitation.peer.address)
+        self._send_data(frame, solicitation.peer)
 
         # Return the solicitation
         return solicitation
