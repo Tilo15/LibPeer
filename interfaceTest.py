@@ -7,7 +7,7 @@ from LibPeer.Interfaces.DSI import DSI
 from LibPeer.Interfaces.DSI.connection import Connection
 
 
-log.settings(True, 1)
+log.settings(True, 0)
 
 discoverer = AMPP(["ifaceTest"])
 manager = Manager("ifaceTest", discoverer, "test")
@@ -43,12 +43,18 @@ interface.new_connection.subscribe(new_connection)
 while True:
     line = sys.stdin.readline()
 
+    if(line == '#\n'):
+        break
+
     print("FINDING NEW PEERS")
     for peer in manager.get_peers():
         print("FOUND %s" % peer)
-        connection = interface.connect(peer)
-        connections.add(connection)
-        threading.Thread(target=listen_to_peer, args=(connection,)).start()
+        try:
+            connection = interface.connect(peer)
+            connections.add(connection)
+            threading.Thread(target=listen_to_peer, args=(connection,)).start()
+        except:
+            print ("FAILED TO CONNECT TO PEER %s" % peer)
 
     for connection in connections:
         print("SENDING TO %s" % connection.peer.address)
@@ -58,3 +64,11 @@ while True:
             print("UNABLE TO SEND TO %s" % connection.peer)
 
     print ("DONE")
+
+for connection in connections:
+    connection.close()
+
+manager.stop()
+
+print("EXIT")
+exit()

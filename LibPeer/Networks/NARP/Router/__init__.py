@@ -134,7 +134,7 @@ class NARPRouter:
                 # Catch any network errors
                 try:
                     # Forward the data to it's destination
-                    dest_network.send_datagram # TODO
+                    dest_network.send_datagram() # TODO
 
                 
 
