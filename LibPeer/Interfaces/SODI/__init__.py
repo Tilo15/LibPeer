@@ -60,7 +60,6 @@ class SODI(Interface):
         else:
             # We aren't expecting a reply from this peer, so it must be a solicitation, get it's size
             sol_size = struct.unpack("!H", message.data[:2])[0]
-            print(message.data)
 
             # Deserialise
             solicitation = Solicitation.from_dict(unpackb(message.data[2:sol_size + 2]))

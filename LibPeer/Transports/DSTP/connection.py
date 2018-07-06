@@ -62,6 +62,8 @@ class Connection:
                 self.connecting = False
                 self.schedule_check_alive()
                 self.do_send()
+            else:
+                self.send_message(Connection.MESSAGE_RESET)
 
         elif(ident == Connection.MESSAGE_CONNECT_ACCEPT):
             if(self.connecting):
@@ -278,3 +280,18 @@ class Connection:
     def fail_all_remaining(self, reason):
         for i in self.receipts.values():
             i.failure(reason)
+        self.receipts = {}
+
+        if(not self.connected):
+            # Tidy up
+            self.to_send = []
+            self.in_flight = {}
+            self.receipts = {}
+            self.last_chunk = b"\x00" * 16
+            self.last_send = 0
+            # RX
+            self.received = {}
+            self.forgotten = set()
+            self.forgotten.add(b"\x00" * 16)
+            self.assembling = False
+            self.assemble_queue = []
