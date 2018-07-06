@@ -2,6 +2,7 @@ from LibPeer.Manager.peer import Peer
 from LibPeer.Interfaces import Interface
 from LibPeer.Events.awaiter import ReceiptAwaiter
 from LibPeer.Formats.butil import sb
+from LibPeer.Logging import log
 from threading import Lock
 
 import queue
@@ -21,6 +22,7 @@ class Connection:
         self._interface: Interface = interface
         self._data_left = 0
         self._is_client = initiate
+        self.closed = False
 
         if(initiate):
             # Initiate the connection with the 'server'
@@ -43,7 +45,7 @@ class Connection:
             read = self._bytes[self._position:self._position + to_read]
             result += read
             self._position += len(read)
-            to_read -= len(result)
+            to_read = count - len(result)
 
         return result
 
@@ -77,8 +79,11 @@ class Connection:
         '''Close the connection'''
         if(self.open):
             ReceiptAwaiter(self._interface._send_data, b"DSID", self.peer)
-            print("connection closed")
             self.open = False
+            self.closed = True
+        else:
+            log.warn("Connection to peer %s already closed" % self.peer)
+            
 
     def _chunk_received(self, data):
         while(len(data) > 0):
@@ -113,8 +118,7 @@ class Connection:
             elif(data[:4] == b"DSID"):
                 # Disconnect request
                 self.open = False
-
-                print("connection closed")
+                self.closed = True
 
                 # Process leftovers
                 data = data[4:]
