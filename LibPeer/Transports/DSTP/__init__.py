@@ -12,7 +12,7 @@ import uuid
 
 
 class DSTP(Transport):
-    def __init__(self, muxer, *modifiers):
+    def __init__(self, muxer, *modifiers, full_checksum=True):
         self.muxer = muxer
         self.modifiers = modifiers
         self.id = b'\x06'
@@ -20,6 +20,7 @@ class DSTP(Transport):
         self.data_received = LibPeer.Events.Event()
         self.delay_target = 0.1
         self.channel_connections = {}
+        self.full_checksum = full_checksum
 
     def send(self, data, address, channel=b"\x00" * 16):
         connection = self.get_or_create_connection(address, sb(channel))
@@ -35,7 +36,7 @@ class DSTP(Transport):
             self.channel_connections[channel] = {}
 
         if(hash not in self.channel_connections[channel]):
-            connection = Connection(address, channel, self.connection_send)
+            connection = Connection(address, channel, self.connection_send, self.full_checksum)
             connection.new_data.subscribe(self.data_ready)
             self.channel_connections[channel][hash] = connection
         

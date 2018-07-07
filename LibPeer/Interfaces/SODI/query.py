@@ -38,11 +38,11 @@ class Query:
         frame += obj_data
         frame += struct.pack("!Q", data_size)
 
-        # Send the frame
-        self.interface._send_data(frame, self.peer)
-
         # Set replying status
         self._replying = True
+
+        # Send the frame
+        return self.interface._send_data(frame, self.peer)
 
     def send(self, data: bytes):
         '''Send the data section of the reply to the query. Must have called reply first'''
@@ -57,6 +57,6 @@ class Query:
         self._data_remaining -= len(data)
 
         # Send the data
-        self.interface._send_data(data, self.peer)
+        return self.interface._send_data(data, self.peer)
 
 

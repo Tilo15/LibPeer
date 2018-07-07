@@ -15,7 +15,7 @@ class Chunk:
         self.time_sent = 0
         self.valid = False
 
-    def serialise(self):
+    def serialise(self, md5sum=True):
         # Empty UUID if this is first chunk
         after = b"\x00" * 16
         if(self.after != None):
@@ -51,7 +51,9 @@ class Chunk:
         # Verify chunk data
         chunk.valid = lite_checksum == zlib.adler32(data)
 
-        if(chunk.valid):
+        # A full checksum with all zeros means that only the
+        # lite checksum was sent
+        if(chunk.valid and full_checksum != b"\x00"*16):
             hasher = hashlib.md5()
             hasher.update(data)
             chunk.valid = full_checksum == hasher.digest()

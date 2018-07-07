@@ -21,6 +21,7 @@ class Reply:
         self._received_object_bytes = b""
         self._remaining = object_size
         self._receiving_data = False
+        self._read_data = 0
         self._fifo: queue.Queue = queue.Queue()
 
     def _chunk_received(self, data: bytes):
@@ -105,16 +106,25 @@ class Reply:
             # Buffer data
             data += chunk
 
+        # Keep track of how much data has been read
+        self._read_data += len(data)
+
         # Return requested data
         return data
 
     def read_all(self):
-        '''Reads all data from the data part of the reply'''
+        '''Reads all remaining data from the data part of the reply'''
         data = b""
 
-        while len(data) != self.data_size:
+        # Calculate the amount of data that has to be read before we are done reading
+        expected_size = self.data_size - self._read_data
+
+        while len(data) != expected_size:
             # Read more data
             data += self._fifo.get()
+
+        # Keep track of how much data has been read
+        self._read_data += len(data)
 
         # Hand over the goods
         return data

@@ -16,7 +16,7 @@ class Connection:
     SEND_RETRY_TIMEOUT = 5
     PING_MAX_RETRIES = 10
 
-    def __init__(self, address, channel, send_func):
+    def __init__(self, address, channel, send_func, use_full_checksum):
         log.debug("new connection with %s instanciated" % address)
         self.address = address
         self.channel = channel
@@ -28,6 +28,7 @@ class Connection:
         self.last_ping = 0
         self.last_pong = 0
         self.ping_retries = 0
+        self.use_full_checksum = use_full_checksum
         # TX
         self.to_send = []
         self.in_flight = {}
@@ -143,7 +144,7 @@ class Connection:
     def send_chunk(self, chunk):
         self.in_flight[chunk.id] = chunk
         #try:
-        self.send_message(Connection.MESSAGE_CHUNK, chunk.serialise())
+        self.send_message(Connection.MESSAGE_CHUNK, chunk.serialise(self.use_full_checksum))
         #except:
         #log.warn("Packet dropped")
 

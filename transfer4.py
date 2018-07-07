@@ -15,7 +15,7 @@ import os
 import sys
 
 
-log.settings(True, 0)
+log.settings(True, 1)
 
 discoverer = AMPP(["badftp4"])
 manager = Manager("badftp4", discoverer, "test")
@@ -76,7 +76,7 @@ def handle_query(query: Query):
 
 interface.received_query.subscribe(handle_query)
 
-time.sleep(30)
+time.sleep(15)
 
 while True:
 
@@ -117,6 +117,9 @@ while True:
     while not sol.reply.complete:
         f.write(sol.reply.read())
         sys.stdout.write("Downloading file %.2f%% complete (%i/%i)\r" % (((sol.reply.data_received / float(sol.reply.data_size)) * 100), sol.reply.data_received, sol.reply.data_size))
+
+    # Get remaining data in buffer
+    f.write(sol.reply.read_all())
 
     f.close()
 
