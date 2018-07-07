@@ -26,9 +26,13 @@ class Chunk:
         chunk = b"%s%s%s" % (self.id, after, sb(self.data))
 
         lite_checksum = zlib.adler32(chunk)
-        hasher = hashlib.md5()
-        hasher.update(chunk)
-        full_checksum = hasher.digest()
+
+        full_checksum = b"\x00" * 16
+
+        if(md5sum):
+            hasher = hashlib.md5()
+            hasher.update(chunk)
+            full_checksum = hasher.digest()
 
         frame = b"%s%s%s" % (struct.pack('!dL', self.time_sent, lite_checksum), full_checksum, chunk)
 

@@ -20,7 +20,7 @@ log.settings(True, 1)
 discoverer = AMPP(["badftp4"])
 manager = Manager("badftp4", discoverer, "test")
 network = manager.add_network(IPv4, local=True)
-transpo = manager.add_transport(DSTP)
+transpo = manager.add_transport(DSTP, full_checksum=False)
 discoverer.add_network(network)
 
 interface = SODI()
