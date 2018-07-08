@@ -14,7 +14,7 @@ import threading
 log.settings(True, 1)
 
 discoverer = AMPP(["badftp3"])
-manager = Manager("badftp3", discoverer, "test")
+manager = Manager("badftp3", discoverer)
 network = manager.add_network(IPv4, local=True)
 transpo = manager.add_transport(DSTP)
 discoverer.add_network(network)

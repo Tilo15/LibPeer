@@ -11,7 +11,7 @@ class LAN(Discoverer):
         self.recommended_rebroadcast_interval = 10
         self.samband = Samband()
 
-    def start_discoverer(self, cachePath):
+    def start_discoverer(self):
 	# Lan doesn't cache.
         reactor.listenMulticast(1944, self.samband, listenMultiple=True)
 

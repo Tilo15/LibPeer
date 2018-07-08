@@ -288,7 +288,7 @@ class AMPP(Discoverer):
         
 
 
-    def start_discoverer(self, cachePath):
+    def start_discoverer(self):
         deferred = defer.Deferred()
 
         # Instansiate bootstrappers

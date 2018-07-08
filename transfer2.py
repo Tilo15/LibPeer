@@ -19,7 +19,7 @@ discoverer = AMPP.AMPP(["badftp2"])
 # 	Application Name: badftp2
 #	Discoverer      : our discoverer
 #	Cache File Path : cachefile
-m = LibPeer.Manager.Manager("badftp2", discoverer, "cachefile")
+m = LibPeer.Manager.Manager("badftp2", discoverer)
 
 # Register a network and transport with the manager
 net = m.add_network(ipv4.IPv4, local=True)

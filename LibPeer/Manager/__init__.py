@@ -15,7 +15,7 @@ import threading
 import sys
 
 class Manager:
-	def __init__(self, application, discoverer, cachePath):
+	def __init__(self, application, discoverer):
 		self.application = application
 		self.threaded = False
 		self.discoverable = False
@@ -27,7 +27,6 @@ class Manager:
 		self.search_labels = []
 		self.message_received = Events.KeyedEvent()
 		self.discoverer = discoverer
-		self.discoveryCache = cachePath
 		self.loop_counter = 0
 
 		self.add_transport(ping.Ping)
@@ -59,7 +58,7 @@ class Manager:
 		"""Run the Peer stack on the current thread"""		
 		loop = LoopingCall(self.loop)
 		loop.start(1)
-		self.discoverer.start_discoverer(self.discoveryCache).addCallback(self.bootstrap_complete)
+		self.discoverer.start_discoverer().addCallback(self.bootstrap_complete)
 		reactor.run(installSignalHandlers=False)
 
 	def bootstrap_complete(self, data):

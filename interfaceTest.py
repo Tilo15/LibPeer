@@ -10,7 +10,7 @@ from LibPeer.Interfaces.DSI.connection import Connection
 log.settings(True, 0)
 
 discoverer = AMPP(["ifaceTest"])
-manager = Manager("ifaceTest", discoverer, "test")
+manager = Manager("ifaceTest", discoverer
 network = manager.add_network(IPv4, local=True)
 transpo = manager.add_transport(DSTP)
 discoverer.add_network(network)

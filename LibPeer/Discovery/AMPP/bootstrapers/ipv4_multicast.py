@@ -9,7 +9,7 @@ class IPv4_Multicast(Bootstrapper):
         self.network_type = "IPv4"
         self.recommended_advertise_interval = 10
         self.discoverer = LAN()
-        self.discoverer.start_discoverer(None).addCallback(self.discoverer_ready)
+        self.discoverer.start_discoverer().addCallback(self.discoverer_ready)
 
     def discoverer_ready(self, success):
         log.debug("LAN discovery ready")

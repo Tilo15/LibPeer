@@ -2,7 +2,7 @@ class Discoverer:
     def __init__(self):
         self.recommended_rebroadcast_interval = 40
 
-    def start_discoverer(self, cachePath):
+    def start_discoverer(self):
         raise NotImplementedError
 
     def get_address(self):
