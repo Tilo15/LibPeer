@@ -88,8 +88,8 @@ class NARPRouter:
 
             # If the address is valid
             if(type(net_address) is tuple):
-                # Create a BAddress with AMPP as the application
-                peer_address = BAddress("AMPP", net_address[0], net_address[1], address_type=network.type)
+                # Create a BAddress with NARP as the application
+                peer_address = BAddress("NARP", net_address[0], net_address[1], address_type=network.type)
 
                 # Log what we are seen as
                 log.debug("This router can be identified as %s" % peer_address)
@@ -105,6 +105,17 @@ class NARPRouter:
             
 
     def handle_new_address(self, address: BAddress, network_id: bytes, hops_left: int):
+        # Don't forward AMPP advertorials across networks
+        if(address.protocol == "AMPP"):
+            log.msg("Not forwarding AMPP advertorial across networks")
+            return
+
+        network: Network = self.networks[network_id]
+        if(network.type != address.address_type):
+            # TODO allow NARP addresses through when we can handle them
+            log.msg("Not forwarding advetorial with incorrect network type")
+            return
+
         # Get routable address
         new_address = self.create_routable_address(address, network_id)
 
@@ -152,8 +163,17 @@ class NARPRouter:
 
         # Loop over each address we were given
         for address in badds:
+            # Save the address's protocol
+            protocol = narp_address.protocol
+
+            # Set it to an empty string
+            narp_address.protocol = ""
+
             # Wrap the address around the routable address
             adv_address = AddressUtil.add_outer_hop(address, narp_address)
+
+            # Set the new address's protocol to the narp_address's original protocol
+            adv_address.protocol = protocol
 
             # Advertise this address
             discoverer.advertise(adv_address, ttl)
@@ -175,7 +195,6 @@ class NARPRouter:
         # New datagram from one of our networks
         # Check if it is a NARP packet destaned for a router
         if(datagram[:5] == b"NARPR"):
-                log.msg("GOT A NARPR!")
             # Catch any errors
             #try:
                 # Valid identifier
@@ -206,6 +225,7 @@ class NARPRouter:
                     log.info("Could not find destination network for packet")
                     return
 
+
                 # Make sure the destination exists
                 port = base64.b64decode(narp_address.port)
                 if(port not in self.network_addresses[net_address]):
@@ -220,9 +240,10 @@ class NARPRouter:
                 # Get the destination's real address
                 dest_address: BAddress = self.network_addresses[net_address][port]
 
+
                 # Construct the reply address
                 reply_address = self.create_routable_address(address, netid)
-                reply_address.protocol = "NARP"
+                reply_address.protocol = ""
 
                 # Serialise the reply address
                 serialised_reply = reply_address.get_binary_address()

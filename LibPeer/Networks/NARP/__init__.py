@@ -25,17 +25,18 @@ class NARP(Network):
     def network_received_data(self, datagram: bytes, address: BAddress, network: Network):
         # New datagram from underlying network
         # Check if it is for us
-        if(datagram[:5] == "NARPU"):
+        if(datagram[:5] == b"NARPU"):
             # Valid identifier
             data:bytes = datagram[5:]
 
             # Get address field length
-            addrlen = struct.unpack('!Q', data[:8])
+            addrlen = struct.unpack('!Q', data[:8])[0]
 
             # Get the BAddress of this packet
             inner_narp_address = BAddress.from_serialised(data[8:addrlen+8])
 
             # Add the next hop address to the address we ultimately return
+            address.protocol = "NARP"
             narp_address = AddressUtil.add_outer_hop(address, inner_narp_address)
 
             # Get the encapsulated datagram
@@ -43,7 +44,7 @@ class NARP(Network):
             
             # If the encapsulated datagram is another NARP packet
             # unwrap that before sending to the muxer
-            if(encap_datagram[:5] == "NARPU"):
+            if(encap_datagram[:5] == b"NARPU"):
                 # If we got here from unwrapping another NARP packet
                 # keep the original NARP address instead of using the new one
                 if(network == "NARP"):
@@ -52,7 +53,7 @@ class NARP(Network):
                 # Unwrap the child NARP packet
                 return self.network_received_data(encap_datagram, narp_address, "NARP")
 
-            elif(encap_datagram[:4] == "AMPP"):
+            elif(encap_datagram[:4] == b"AMPP"):
                 # AMPP should never transported over NARP,
                 # instead, the NARP router should pass along AMPP messages
                 # over the network that NARP is runing atop of.
@@ -62,10 +63,11 @@ class NARP(Network):
 
             else:
                 # Send the datagram up the chain
+                self.muxer.datagram_received(encap_datagram, narp_address)
                 self.datagram_received.call(encap_datagram, narp_address)
 
         # Router reply message
-        elif(datagram[:4] == "PRAN"):
+        elif(datagram[:4] == b"PRAN"):
             # Get message code
             code = struct.unpack("!H", datagram[4:6])
 

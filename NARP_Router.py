@@ -7,7 +7,7 @@ from twisted.internet import reactor
 
 # TODO make configurable
 
-log.settings(True, 1)
+log.settings(True, 0)
 
 muxer = DummyMuxer()
 

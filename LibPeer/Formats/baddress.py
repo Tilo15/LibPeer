@@ -84,7 +84,11 @@ class BAddress:
             return addresses
 
     def get_hash(self):
-        return hashlib.sha256(concatb(self.address_type, self.net_address, str(self.port))).digest()
+        port = self.port
+        if(type(port) is int):
+            port = str(self.port)
+
+        return hashlib.sha256(concatb(self.address_type, self.net_address, port)).digest()
 
 
     def __str__(self):

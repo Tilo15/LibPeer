@@ -84,54 +84,56 @@ interface.received_query.subscribe(handle_query)
 time.sleep(30)
 
 while True:
+    try:
+        peers = manager.get_peers()
 
-    peers = manager.get_peers()
+        for peer in peers:
+            print("[%i]  %s" % (peers.index(peer), peer))
 
-    for peer in peers:
-        print("[%i]  %s" % (peers.index(peer), peer))
+        peerIdStr = input("Query Peer >")
+        if(peerIdStr == ""):
+            continue
 
-    peerIdStr = input("Query Peer >")
-    if(peerIdStr == ""):
-        continue
+        peerId = int(peerIdStr)
 
-    peerId = int(peerIdStr)
+        # Query the peer for files
+        sol = Solicitation("LIST", peers[peerId])
+        interface.send_solicitation(sol)
 
-    # Query the peer for files
-    sol = Solicitation("LIST", peers[peerId])
-    interface.send_solicitation(sol)
+        # Wait for the reply
+        listing = sol.wait_for_object()
 
-    # Wait for the reply
-    listing = sol.wait_for_object()
+        # List the options
+        for option in listing["files"]:
+            print("[%i]  %s" % (listing["files"].index(option), option))
 
-    # List the options
-    for option in listing["files"]:
-        print("[%i]  %s" % (listing["files"].index(option), option))
+        fileId = int(input("File >"))
 
-    fileId = int(input("File >"))
+        # Request that file from the server
+        sol = Solicitation("GET %s" % listing["files"][fileId], peers[peerId])
+        interface.send_solicitation(sol)
 
-    # Request that file from the server
-    sol = Solicitation("GET %s" % listing["files"][fileId], peers[peerId])
-    interface.send_solicitation(sol)
+        # Wait for the reply
+        info = sol.wait_for_object()
 
-    # Wait for the reply
-    info = sol.wait_for_object()
+        # Print info
+        print("'%s' has has %i hits" % (info["file"], info["download_count"]))
 
-    # Print info
-    print("'%s' has has %i hits" % (info["file"], info["download_count"]))
+        # Get the file ready
+        f = open(info["file"], 'wb')
 
-    # Get the file ready
-    f = open(info["file"], 'wb')
+        # Start reading
+        while not sol.reply.complete:
+            f.write(sol.reply.read())
+            sys.stdout.write("Downloading file %.2f%% complete (%i/%i)\r" % (((sol.reply.data_received / float(sol.reply.data_size)) * 100), sol.reply.data_received, sol.reply.data_size))
 
-    # Start reading
-    while not sol.reply.complete:
-        f.write(sol.reply.read())
-        sys.stdout.write("Downloading file %.2f%% complete (%i/%i)\r" % (((sol.reply.data_received / float(sol.reply.data_size)) * 100), sol.reply.data_received, sol.reply.data_size))
+        # Get remaining data in buffer
+        f.write(sol.reply.read_all())
 
-    # Get remaining data in buffer
-    f.write(sol.reply.read_all())
+        f.close()
 
-    f.close()
-
-    print("\nDone!")
+        print("\nDone!")
+    except:
+        print("ERROR")
 
 
