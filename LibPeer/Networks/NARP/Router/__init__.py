@@ -6,14 +6,18 @@ from LibPeer.Networks.NARP import router_reply_codes
 from LibPeer.Networks.NARP.address_util import AddressUtil
 from LibPeer.Networks.NARP.Router.dummy_muxer import DummyMuxer
 from LibPeer.Networks.NARP.Router.AMPP import IndependantAMPP
+from twisted.internet import reactor
 import uuid
 import struct
+import base64
 
 # TODO not at all even really started
 # make your own Muxer for this I think
 
 class NARPRouter:
     def __init__(self, networks):
+        self.router_id = uuid.uuid4().bytes
+
         self.muxer = DummyMuxer()
         self.networks = {}
         # Dict of a dict
@@ -22,14 +26,14 @@ class NARPRouter:
 
         for network in networks:
             # Create a unique id for this network
-            netid = uuid.uuid4()
+            netid = uuid.uuid4().bytes
             self.networks[netid] = network
 
             # Subscribe to new data
             network.datagram_received.subscribe(self.datagram_received, netid)
 
             # Create an AMPP instance for this network
-            discoverer = IndependantAMPP(network, netid)
+            discoverer = IndependantAMPP(network, netid, self.router_id)
             self.network_discoverers[netid] = discoverer
 
             # Create the dict for this network
@@ -37,10 +41,86 @@ class NARPRouter:
 
             # Subscribe to discovered addresses
             discoverer.new_address.subscribe(self.handle_new_address)
+
+            # Subscribe to new subscriptions
+            discoverer.new_subscription.subscribe(self.propogate_subscription)
+
+            # Start the discoverer
+            discoverer.start_discoverer()
+
+            # Start advertising
+            self.get_addresses(netid)
+
+
+    def get_addresses(self, netid):
+        # Get discoverer
+        discoverer: IndependantAMPP = self.network_discoverers[netid]
+
+        # Get addresses from discoverer
+        discoverer.get_address().addCallback(self.got_addresses, netid)
+
+    def got_addresses(self, addresses, netid):
+        # Get the discoverer
+        discoverer: IndependantAMPP = self.network_discoverers[netid]   
+
+        # Get the network
+        network: Network = self.networks[netid]    
+
+        # Get address suggestions as BAddresses
+        badds = self.handle_address_suggestions(addresses, netid)
+
+        # Advertise each address
+        for addr in badds:
+            discoverer.advertise(addr, 5)
+
+        # After the suggested amount of time, start again
+        reactor.callLater(discoverer.recommended_rebroadcast_interval, self.get_addresses, netid)
+
+    def handle_address_suggestions(self, addresses, netid):
+        baddresses = set()
+
+        network: Network = self.networks[netid]
+
+        # Loop over each suggestion
+        for address_suggestion in addresses:
+            # Get the BAddress from the network using the suggestion
+            net_address = network.get_address(address_suggestion[0])
+
+            # If the address is valid
+            if(type(net_address) is tuple):
+                # Create a BAddress with AMPP as the application
+                peer_address = BAddress("AMPP", net_address[0], net_address[1], address_type=network.type)
+
+                # Log what we are seen as
+                log.debug("This router can be identified as %s" % peer_address)
+
+                # Advertise
+                baddresses.add(peer_address)
+
+            else:
+                log.info("Address suggestion '%s' rejected by %s network controller" % (ss(address_suggestion[0]), network.type))
+
+        return baddresses
+        
             
 
-    def handle_new_address(self, address: BAddress, network_id: bytes):
-        # Get the address hash
+    def handle_new_address(self, address: BAddress, network_id: bytes, hops_left: int):
+        # Get routable address
+        new_address = self.create_routable_address(address, network_id)
+
+        # Advertise this new address
+        # TODO, loop over each network and send out the address wrapped in that network's interface's address
+        for netid, discoverer in self.network_discoverers.items():
+            # Skip if this is the originating network
+            if(network_id == netid):
+                continue
+
+            # Query peers for our address
+            discoverer.get_address().addCallback(self.network_address_determined, discoverer, new_address, netid, hops_left)
+
+
+    def create_routable_address(self, address: BAddress, network_id: bytes):
+        # Get the hash of the address
         address_hash = address.get_hash()
 
         # Store the address against the hash
@@ -51,7 +131,7 @@ class NARPRouter:
             address.protocol,
             # Address is network ID because that is the
             # least specific part of the address
-            base64.b64encode(self.network_id),
+            base64.b64encode(network_id),
             # Address hash is Port because that is the
             # most specific part of the address
             base64.b64encode(address_hash),
@@ -59,28 +139,28 @@ class NARPRouter:
             "NARP"
         )
 
-        # Advertise this new address
-        # TODO, loop over each network and send out the address wrapped in that network's interface's address
-        for discoverer in self.network_discoverers.values():
-            # Skip if this is the originating network
-            if(self.network_discoverers[network_id] == discoverer):
-                pass
-
-            # Query peers for our address
-            discoverer.get_address().addCallback(self.network_address_determined, discoverer, new_address)
+        # Return the new routable address
+        return new_address
 
 
-    def network_address_determined(self, addresses, discoverer: IndependantAMPP, narp_address: BAddress):
+
+    def network_address_determined(self, addresses, discoverer: IndependantAMPP, narp_address: BAddress, netid, ttl: int):
+        # Get address suggestions as BAddresses
+        badds = self.handle_address_suggestions(addresses, netid)
+
+        log.info("Forwarding translated advertorials")
+
         # Loop over each address we were given
-        for address in addresses:
+        for address in badds:
             # Wrap the address around the routable address
             adv_address = AddressUtil.add_outer_hop(address, narp_address)
 
             # Advertise this address
-            discoverer.advertise(adv_address)
+            discoverer.advertise(adv_address, ttl)
 
 
     def propogate_subscription(self, subscription, network_id):
+        log.debug("Propogating subscription for: %s" % ", ".join(subscription.applications))
         # Send subscription to all networks
         for netid, network in self.network_addresses.items():
             # Don't send to the network of origin
@@ -93,48 +173,90 @@ class NARPRouter:
     
     def datagram_received(self, datagram, address: BAddress, netid):
         # New datagram from one of our networks
-        # Check if it is a NARP packet
-        if(datagram[:4] == "NARP"):
+        # Check if it is a NARP packet destaned for a router
+        if(datagram[:5] == b"NARPR"):
+                log.msg("GOT A NARPR!")
             # Catch any errors
-            try:
+            #try:
                 # Valid identifier
-                data:bytes = datagram[4:]
+                data:bytes = datagram[5:]
 
                 # Get address field length
-                addrlen = struct.unpack('!Q', data[:8])
+                addrlen = struct.unpack('!Q', data[:8])[0]
+
+                narp_address = b""
 
                 # Catch address parsing errors
-                try:
+                #try:
+                if True:
                     # Get the BAddress of this packet
                     narp_address = BAddress.from_serialised(data[8:addrlen+8])
-                except:
+                #except:
                     # Send error
-                    self.send_pran(router_reply_codes.PRAN_BAD_ADDRESS, None, address, netid)
-                    return
+                #    self.send_pran(router_reply_codes.PRAN_BAD_ADDRESS, None, address, netid)
+                #    log.info("NARP user sent invalid address")
+                #    return
 
                 # Note that the BAddress is not wrapped at this point
                 # Make sure the network from the address exists
-                if(narp_address.net_address not in self.network_addresses):
+                net_address = base64.b64decode(narp_address.net_address)
+                if(net_address not in self.network_addresses):
                     # Send error
                     self.send_pran(router_reply_codes.PRAN_NOT_FOUND, {"Address": str(narp_address)}, address, netid)
+                    log.info("Could not find destination network for packet")
                     return
 
                 # Make sure the destination exists
-                if(narp_address.port not in self.network_addresses[narp_address.net_address]):
+                port = base64.b64decode(narp_address.port)
+                if(port not in self.network_addresses[net_address]):
                     # Send error
                     self.send_pran(router_reply_codes.PRAN_NOT_FOUND, {"Address": str(narp_address)}, address, netid)
+                    log.info("Could not find destination host for packet")
                     return
 
                 # Get the destination network
-                dest_network: Network = self.networks[narp_address.net_address]
+                dest_network: Network = self.networks[net_address]
 
                 # Get the destination's real address
-                dest_address: BAddress = self.network_addresses[narp_address.net_address][narp_address.port]
+                dest_address: BAddress = self.network_addresses[net_address][port]
+
+                # Construct the reply address
+                reply_address = self.create_routable_address(address, netid)
+                reply_address.protocol = "NARP"
+
+                # Serialise the reply address
+                serialised_reply = reply_address.get_binary_address()
+
+                # Determine the length of the reply address
+                reply_address_size = len(serialised_reply)
+
+                # Construct new datagram
+                forwarded_data = b"NARPU"
+                forwarded_data += struct.pack("!Q", reply_address_size)
+                forwarded_data += serialised_reply
+                forwarded_data += data[addrlen+8:]
 
                 # Catch any network errors
-                try:
+                #try:
+                if True:
                     # Forward the data to it's destination
-                    dest_network.send_datagram() # TODO
+                    log.info("Forward packet from %s to %s" % (address, dest_address))
+                    dest_network.send_datagram(forwarded_data, dest_address)
+                    print(data[addrlen+8:])
+                #except:
+                    # Send error
+                #    self.send_pran(router_reply_codes.PRAN_NETWORK_UNAVAILABLE, None, address, netid)
+                #    log.error("Failed to send packet to address '%s'" % address)
+                #    return
+
+            #except Exception as e:
+                # Send error
+            #    self.send_pran(router_reply_codes.PRAN_INTERNAL_ERROR, None, address, netid)
+            #    log.critical("Internal router error: " + str(e))
+            #    return
+        
+        elif(datagram[:5] == b"NARPU"):
+            log.debug("Got NARP user message, ignoring")
 
                 
 

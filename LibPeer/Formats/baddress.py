@@ -23,7 +23,12 @@ class BAddress:
         else:
             data += b"\x02"
 
-        data += b"%s\x1F%s\x1F%i\x04" % (sb(self.address_type), sb(self.net_address), self.port)
+        # Make port a string if it is not
+        port = self.port
+        if(type(port) is int):
+            port = str(self.port)
+
+        data += b"%s\x1F%s\x1F%s\x04" % (sb(self.address_type), sb(self.net_address), sb(port))
         return data
 
     @staticmethod
@@ -62,7 +67,7 @@ class BAddress:
                     body += bytes([data[i]])
 
         bodyData = body.split(b"\x1F")
-        return BAddress(ss(protocol), ss(bodyData[1]), int(ss(bodyData[2])), ss(label), ss(bodyData[0]))
+        return BAddress(ss(protocol), ss(bodyData[1]), ss(bodyData[2]), ss(label), ss(bodyData[0]))
 
     @staticmethod
     def array_from_serialised(data, application=""):
@@ -84,11 +89,17 @@ class BAddress:
 
     def __str__(self):
         string = ""
+
+        # Make port a string if it is not
+        port = self.port
+        if(type(port) is int):
+            port = str(self.port)
+
         if(self.protocol != None):
             labelHex = binascii.hexlify(sb(self.label))
-            string = "%s[%s://%s:%s/%s]" % st(self.address_type, self.protocol, self.net_address, str(self.port), labelHex)
+            string = "%s[%s://%s:%s/%s]" % st(self.address_type, self.protocol, self.net_address, port, labelHex)
         else:
-            string = "%s[%s:%s]" % st(self.address_type, self.net_address, str(self.port))
+            string = "%s[%s:%s]" % st(self.address_type, self.net_address, port)
         return string
 
 

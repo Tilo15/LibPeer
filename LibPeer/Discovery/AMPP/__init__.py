@@ -11,9 +11,10 @@ from LibPeer.Logging import log
 from twisted.internet import reactor, defer
 from copy import deepcopy
 import operator
+import uuid
 
 class AMPP(Discoverer):
-    def __init__(self, applications, broadcast_ttl = 30):
+    def __init__(self, applications, broadcast_ttl = 30, instance_id = None):
         self.recommended_rebroadcast_interval = 5
         # This later gets changed to every five minutes after the first advertasment is sent
         # Every 5 minutes equates to approximately 41 kbps (with 100 byte packets) if connected to a million advertising peers
@@ -33,6 +34,10 @@ class AMPP(Discoverer):
         self.subscription_forwarded_ids = set()
         self.advertorial_forwarded_ids = set()
         self.subscription_peers = set()
+
+        self.instance_id = instance_id
+        if(self.instance_id == None):
+            self.instance_id = uuid.uuid4().bytes
 
     def add_network(self, network):
         log.debug("Network of type %s registered" % network.type)
@@ -63,13 +68,20 @@ class AMPP(Discoverer):
         if(message[:4] == b"AMPP"):
             # Set the address protocol
             address.protocol = "AMPP"
+
+            # Get the machine/instance identifier
+            sender_id = message[4:20]
+
+            # Ignore any packets with our instance id
+            if(sender_id == self.instance_id):
+                return
             
             # Store the peer address
             self.ampp_peers[address.get_hash()] = address
 
-            if(message[4:7] == b"SUB"):
+            if(message[20:23] == b"SUB"):
                 # Deserialise Subscribe Request
-                subscription = Subscription.from_dict(umsgpack.unpackb(message[7:]))
+                subscription = Subscription.from_dict(umsgpack.unpackb(message[23:]))
 
                 # Check to see if we have already received this message before
                 if(subscription.id in self.subscription_forwarded_ids):
@@ -109,9 +121,9 @@ class AMPP(Discoverer):
 
 
 
-            elif(message[4:7] == b"ADV"):
+            elif(message[20:23] == b"ADV"):
                 # Deserialise Advertise Request
-                advertorial = Advertorial.from_dict(umsgpack.unpackb(message[7:]))
+                advertorial = Advertorial.from_dict(umsgpack.unpackb(message[23:]))
 
                 # Check to see if we have already received this message before
                 if(advertorial.id in self.advertorial_forwarded_ids):
@@ -135,13 +147,13 @@ class AMPP(Discoverer):
                     log.debug("Found additional AMPP peer %s via AMPP" % advertorial.address)
                     self.ampp_peers[advertorial.address.get_hash()] = advertorial.address
 
-            elif(message[4:7] == b"ADQ"):
+            elif(message[20:23] == b"ADQ"):
                 # Address request
                 self.send_datagram(b"ADR" + address.get_binary_address(), address)
 
-            elif(message[4:7] == b"ADR"):
+            elif(message[20:23] == b"ADR"):
                 # Got an address
-                reported_address = BAddress.from_serialised(message[7:])
+                reported_address = BAddress.from_serialised(message[23:])
                 log.debug("%s sees us as %s" % (address, reported_address))
                 self.peer_visible_addresses[reported_address.get_hash()] = (sb(reported_address.net_address), reported_address.address_type)
 
@@ -188,8 +200,11 @@ class AMPP(Discoverer):
 
 
     def send_datagram(self, message, address):
-        if(address.address_type in self.networks):
-            self.networks[address.address_type].send_datagram(b"AMPP" + message, address)
+        if(sb(address.address_type) == b"NARP"):
+            log.debug("Not sending AMPP packet over NARP")
+
+        elif(address.address_type in self.networks):
+            self.networks[address.address_type].send_datagram(b"AMPP" + self.instance_id + message, address)
         else:
             log.error("Failed to send datagram to '%s', no network of that type available" % address)
 

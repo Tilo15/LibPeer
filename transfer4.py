@@ -2,6 +2,8 @@ from LibPeer.Logging import log
 from LibPeer.Discovery.AMPP import AMPP
 from LibPeer.Manager import Manager
 from LibPeer.Networks.ipv4 import IPv4
+from LibPeer.Networks.NARP import NARP
+from LibPeer.Networks.NARP.pran_logger import PranLogger
 from LibPeer.Transports.DSTP import DSTP
 from LibPeer.Interfaces.SODI import SODI
 from LibPeer.Interfaces.SODI.query import Query
@@ -15,13 +17,16 @@ import os
 import sys
 
 
-log.settings(True, 1)
+log.settings(True, 0)
 
 discoverer = AMPP(["badftp4"])
 manager = Manager("badftp4", discoverer)
-network = manager.add_network(IPv4, local=True)
+networ1 = manager.add_network(IPv4, local=True)
+networ2 = manager.add_network(NARP)
+nlogger = PranLogger(networ2)
 transpo = manager.add_transport(DSTP, full_checksum=False)
-discoverer.add_network(network)
+discoverer.add_network(networ1)
+discoverer.add_network(networ2)
 
 interface = SODI()
 interface.begin(manager)
@@ -76,7 +81,7 @@ def handle_query(query: Query):
 
 interface.received_query.subscribe(handle_query)
 
-time.sleep(15)
+time.sleep(30)
 
 while True:
 
@@ -85,7 +90,11 @@ while True:
     for peer in peers:
         print("[%i]  %s" % (peers.index(peer), peer))
 
-    peerId = int(input("Query Peer >"))
+    peerIdStr = input("Query Peer >")
+    if(peerIdStr == ""):
+        continue
+
+    peerId = int(peerIdStr)
 
     # Query the peer for files
     sol = Solicitation("LIST", peers[peerId])

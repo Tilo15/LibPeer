@@ -7,9 +7,9 @@ from LibPeer.Events import Event
 import base64
 
 class IndependantAMPP(AMPP):
-    def __init__(self, network, network_id, broadcast_ttl = 30):
+    def __init__(self, network, network_id, router_id, broadcast_ttl = 30):
         # Call base constructor
-        AMPP.__init__(self, [], broadcast_ttl)
+        AMPP.__init__(self, ["AMPP"], broadcast_ttl, router_id)
 
         # Save the network ID
         self.network_id = network_id
@@ -35,7 +35,7 @@ class IndependantAMPP(AMPP):
 
     def add_to_cache(self, advertorial: Advertorial):
         # When we save an advertorial, tell the router
-        self.new_address.call(advertorial.address, self.network_id)
+        self.new_address.call(advertorial.address, self.network_id, advertorial.hops_left)
 
         self.cached_advertorials[advertorial.id] = advertorial
         self.clean_cache()
@@ -56,3 +56,16 @@ class IndependantAMPP(AMPP):
         
         # Base method
         AMPP.send_subsrciption(self, subscription, peer)
+
+    def advertise(self, peer_address, ttl=30):
+        advertorial = Advertorial()
+        advertorial.address = peer_address
+        advertorial.hops_left = ttl
+        advertorial.lifespan = self.recommended_rebroadcast_interval
+        self.send_advertorial(advertorial)
+
+        self.subscribe()
+
+        # Cache any non AMPP advertorials that pass through
+        if(peer_address.protocol != "AMPP"):
+            self.add_to_cache(advertorial)

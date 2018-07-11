@@ -25,9 +25,9 @@ class NARP(Network):
     def network_received_data(self, datagram: bytes, address: BAddress, network: Network):
         # New datagram from underlying network
         # Check if it is for us
-        if(datagram[:4] == "NARP"):
+        if(datagram[:5] == "NARPU"):
             # Valid identifier
-            data:bytes = datagram[4:]
+            data:bytes = datagram[5:]
 
             # Get address field length
             addrlen = struct.unpack('!Q', data[:8])
@@ -43,7 +43,7 @@ class NARP(Network):
             
             # If the encapsulated datagram is another NARP packet
             # unwrap that before sending to the muxer
-            if(encap_datagram[:4] == "NARP"):
+            if(encap_datagram[:5] == "NARPU"):
                 # If we got here from unwrapping another NARP packet
                 # keep the original NARP address instead of using the new one
                 if(network == "NARP"):
@@ -74,6 +74,7 @@ class NARP(Network):
 
 
 
+
     def send_datagram(self, message, address: BAddress):
         # Unwrap the two needed addresses from the NARP address
         next_hop = AddressUtil.get_next_hop_address(address)
@@ -83,7 +84,7 @@ class NARP(Network):
         bnarp_address = narp_address.get_binary_address()
 
         # Construct the NARP datagram
-        datagram = b"NARP"
+        datagram = b"NARPR"
 
         # Add the address information
         datagram += struct.pack("!Q", len(bnarp_address))
