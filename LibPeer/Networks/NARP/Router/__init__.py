@@ -6,6 +6,7 @@ from LibPeer.Networks.NARP import router_reply_codes
 from LibPeer.Networks.NARP.address_util import AddressUtil
 from LibPeer.Networks.NARP.Router.dummy_muxer import DummyMuxer
 from LibPeer.Networks.NARP.Router.AMPP import IndependantAMPP
+from LibPeer.Networks.NARP.Router.NARP import IndependantNARP
 from twisted.internet import reactor
 import uuid
 import struct
@@ -23,6 +24,9 @@ class NARPRouter:
         # Dict of a dict
         self.network_addresses = {}
         self.network_discoverers = {}
+        self.network_narps = {}
+
+        self.advertised_addresses = set()
 
         for network in networks:
             # Create a unique id for this network
@@ -35,6 +39,10 @@ class NARPRouter:
             # Create an AMPP instance for this network
             discoverer = IndependantAMPP(network, netid, self.router_id)
             self.network_discoverers[netid] = discoverer
+
+            # Create a NARP instance for this network
+            narp = IndependantNARP(network)
+            self.network_narps[netid] = narp
 
             # Create the dict for this network
             self.network_addresses[netid] = {}
@@ -49,7 +57,7 @@ class NARPRouter:
             discoverer.start_discoverer()
 
             # Start advertising
-            self.get_addresses(netid)
+            #self.get_addresses(netid)
 
 
     def get_addresses(self, netid):
@@ -97,6 +105,9 @@ class NARPRouter:
                 # Advertise
                 baddresses.add(peer_address)
 
+                # Keep note that this is one of our addresses
+                self.advertised_addresses.add(peer_address.get_hash())
+
             else:
                 log.info("Address suggestion '%s' rejected by %s network controller" % (ss(address_suggestion[0]), network.type))
 
@@ -107,14 +118,19 @@ class NARPRouter:
     def handle_new_address(self, address: BAddress, network_id: bytes, hops_left: int):
         # Don't forward AMPP advertorials across networks
         if(address.protocol == "AMPP"):
-            log.msg("Not forwarding AMPP advertorial across networks")
+            log.debug("Not forwarding AMPP advertorial across networks")
             return
 
         network: Network = self.networks[network_id]
-        if(network.type != address.address_type):
+        if(network.type != address.address_type and network.type != "NARP"):
             # TODO allow NARP addresses through when we can handle them
-            log.msg("Not forwarding advetorial with incorrect network type")
+            log.debug("Not forwarding advetorial with incorrect network type")
             return
+
+        # Determine next hop address
+        next_hop = AddressUtil.get_next_hop_address(address)
+
+        # Make sure it isn't one of our addresses
 
         # Get routable address
         new_address = self.create_routable_address(address, network_id)
@@ -159,7 +175,7 @@ class NARPRouter:
         # Get address suggestions as BAddresses
         badds = self.handle_address_suggestions(addresses, netid)
 
-        log.info("Forwarding translated advertorials")
+        log.info("Forwarding translated advertorial")
 
         # Loop over each address we were given
         for address in badds:
