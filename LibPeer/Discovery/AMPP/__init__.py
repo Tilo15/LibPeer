@@ -155,7 +155,7 @@ class AMPP(Discoverer):
                 # Got an address
                 reported_address = BAddress.from_serialised(message[23:])
                 log.debug("%s sees us as %s" % (address, reported_address))
-                self.peer_visible_addresses[reported_address.get_hash()] = (sb(reported_address.net_address), reported_address.address_type)
+                self.peer_visible_addresses[reported_address.get_hash()] = reported_address
 
 
     def get_address(self):
