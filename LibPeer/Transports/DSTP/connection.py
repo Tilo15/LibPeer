@@ -55,7 +55,6 @@ class Connection:
     MESSAGE_CHUNK_NEGATIVE_ACKNOWLEDGE = b"\x15"
 
     def process_message(self, data):
-        log.msg("DSTP GOT MESSAGE")
         ident = data[:1]
         if(ident == Connection.MESSAGE_CONNECT_REQUEST):
             if(self.connected == False):
