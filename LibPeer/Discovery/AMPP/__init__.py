@@ -132,11 +132,13 @@ class AMPP(Discoverer):
                 # Add it if not
                 self.advertorial_forwarded_ids.add(advertorial.id)
 
-                # Add message to cache
-                self.add_to_cache(advertorial)
+                # If there is still life in it
+                if(advertorial.hops_left > 0):
+                    # Add message to cache
+                    self.add_to_cache(advertorial)
 
-                # Forward the message onto any peers who are subscribed to this application type
-                self.send_advertorial(advertorial, address.get_hash())
+                    # Forward the message onto any peers who are subscribed to this application type
+                    self.send_advertorial(advertorial, address.get_hash())
 
                 # If we are listening for this application, store it
                 if(advertorial.address.protocol in self.local_subscriptions):

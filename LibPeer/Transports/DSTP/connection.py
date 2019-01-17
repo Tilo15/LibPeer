@@ -55,7 +55,6 @@ class Connection:
     MESSAGE_CHUNK_NEGATIVE_ACKNOWLEDGE = b"\x15"
 
     def process_message(self, data):
-        log.msg("DSTP GOT MESSAGE")
         ident = data[:1]
         if(ident == Connection.MESSAGE_CONNECT_REQUEST):
             if(self.connected == False):
@@ -96,6 +95,7 @@ class Connection:
 
         elif(ident == Connection.MESSAGE_PONG):
             self.last_pong = time.time()
+            self.metric.latency = self.last_pong - self.last_ping
             self.ping_retries = 0
             if(self.last_send < time.time() - Connection.SEND_RETRY_TIMEOUT):
                 self.do_send()

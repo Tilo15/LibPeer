@@ -22,5 +22,5 @@ else:
     network = IPv4(Muxer(), True, int(port))
     discoverer = AMPP.AMPP(["AMPP"]) # Passing "AMPP" in will cause it to expressly subscribe to AMPP adverts
     discoverer.add_network(network)
-    discoverer.start_discoverer("").addCallback(running)
+    discoverer.start_discoverer().addCallback(running)
     reactor.run(installSignalHandlers=False)

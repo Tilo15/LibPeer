@@ -31,7 +31,7 @@ class Metric:
 
 
     def get_window_size(self):
-        delay_factor = (100 - (self.last_packet_delay*1000 - self.latency*1000)) / 100
+        delay_factor = (1 - self.last_packet_delay*10)
         window_factor = self.in_flight / self.last_window_size
         gain = delay_factor * window_factor
         self.last_window_size += gain

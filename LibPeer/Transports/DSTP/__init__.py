@@ -24,7 +24,7 @@ class DSTP(Transport):
 
     def send(self, data, address, channel=b"\x00" * 16):
         # Run modifiers
-		data = self.mod_encode(address, data)
+        data = self.mod_encode(address, data)
         connection = self.get_or_create_connection(address, sb(channel))
         return connection.send_data(sb(data))
 
