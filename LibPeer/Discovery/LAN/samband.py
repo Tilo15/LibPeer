@@ -33,7 +33,7 @@ class Samband(protocol.DatagramProtocol):
                 self.seenMessages += [sb(data[0]),]
 
                 # Verify checksum
-                checksum = hashlib.sha256(concatb(data[1], data[0])).digest()
+                checksum = hashlib.sha256(concatb(data[0], data[1])).digest()
                 if(checksum == data[2]):
                     # Valid packet
                     peer = LocalPeer(data[1])
