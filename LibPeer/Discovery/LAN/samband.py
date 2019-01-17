@@ -45,7 +45,7 @@ class Samband(protocol.DatagramProtocol):
 
     def broadcast(self, message):
         messageId = uuid.uuid4().bytes
-        checksum = hashlib.sha256(concatb(message, messageId)).digest()
+        checksum = hashlib.sha256(concatb(messageId, message)).digest()
         data = umsgpack.packb([messageId, sb(message), checksum])
         txdata = b'\xF0\x9F\x87\xAE\xF0\x9F\x87\xB8' + data
         self.transport.write(txdata, ("224.0.0.63", 1944))
