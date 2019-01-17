@@ -4,6 +4,7 @@ from twisted.internet.task import LoopingCall
 from LibPeer.Discovery import Discoverer
 from netifaces import interfaces, ifaddresses, AF_INET
 from LibPeer.Discovery.LAN.samband import Samband
+from LibPeer.Formats import baddress
 
 
 class LAN(Discoverer):
@@ -28,7 +29,7 @@ class LAN(Discoverer):
             if(AF_INET in addresses):
                 for link in addresses[AF_INET]:
                     if(link['addr'] != '127.0.0.1'):
-                        ip_list.append((link['addr'].encode('ascii','ignore'), "IPv4"))
+                        ip_list.append(baddress.BAddress(None, link['addr'].encode('ascii','ignore'), None))
         return ip_list
 
     def advertise(self, peer_address):

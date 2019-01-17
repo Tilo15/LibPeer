@@ -34,14 +34,16 @@ class IPv4(Networks.Network):
         self.udp.sendDatagram(message, address)
 
     def get_address(self, peer_suggestion):
-        validation = sb(peer_suggestion).split(b'.')
+        validation = sb(peer_suggestion.net_address).split(b'.')
         valid = len(validation) == 4
         for part in validation:
             valid = valid and len(part) < 4
 
         # Only return an address if it is a valid IPv4 address
         if(valid):
-            return (peer_suggestion, self.port)
+            if(peer_suggestion.port == None):
+                peer_suggestion.port = str(self.port)
+            return (peer_suggestion.net_address, peer_suggestion.port)
         else:
             return None
 

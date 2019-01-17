@@ -115,9 +115,9 @@ class Manager:
 	def broadcast_address(self, addresses):
 		log.debug("We appear as the following addresses to our peers:")
 		for address_suggestion in addresses:
-			log.debug("    %s through %s" % stf(address_suggestion[0], address_suggestion[1]))
-			network = self.muxer.networks[address_suggestion[1]]
-			net_address = network.get_address(address_suggestion[0])
+			log.debug("    %s:%s through %s" % stf(address_suggestion.net_address, address_suggestion.port, address_suggestion.address_type))
+			network = self.muxer.networks[address_suggestion.address_type]
+			net_address = network.get_address(address_suggestion)
 			if(type(net_address) is tuple):
 				peer_address = baddress.BAddress(self.application, net_address[0], net_address[1], address_type=network.type)
 				self.discoverer.advertise(peer_address).addCallback(self.advertised)
